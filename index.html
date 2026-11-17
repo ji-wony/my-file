@@ -1,0 +1,4714 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F6F4FA">
+<meta name="format-detection" content="telephone=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>냉장고 · 단골 장보기 · 메뉴 추천</title>
+<style>
+  :root{
+    /* 연보라 팔레트: #E0DBEF(가장 밝은) · #C4BEE2(중간) · #9986B3(메인) · #6C5A72(진한) */
+    --lilac-100:#E9E5F4;
+    --lilac-200:#E0DBEF;
+    --lilac-300:#C4BEE2;
+    --lilac-500:#9986B3;
+    --lilac-700:#6C5A72;
+
+    --bg:#F6F4FA;
+    --card:#FFFFFF;
+    --line:var(--lilac-300);
+    --line-soft:#EFECF6;
+    --ink:#2E2A36;
+    --ink-2:#5F5668;
+    --ink-3:#6F6780;
+    --brand:var(--lilac-500);
+    --brand-deep:var(--lilac-700);
+    --brand-soft:var(--lilac-200);
+    --brand-line:var(--lilac-300);
+    --star:var(--lilac-500);
+    --shadow:0 1px 2px rgba(108,90,114,.06), 0 6px 16px rgba(108,90,114,.08);
+    --r-lg:18px;
+    --r-md:14px;
+    --r-sm:10px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", "Noto Sans KR", "Segoe UI", Roboto, sans-serif;
+    font-size:15px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+    -webkit-text-size-adjust:100%;
+    text-size-adjust:100%;
+    min-height:100vh;
+  }
+  button{font-family:inherit; font-size:inherit; color:inherit; background:none; border:none; padding:0; cursor:pointer;}
+  input,select,textarea{font-family:inherit; font-size:15px; color:var(--ink);}
+  a{color:inherit; text-decoration:none;}
+
+  .app{
+    max-width:480px;
+    margin:0 auto;
+    background:var(--bg);
+    min-height:100vh;
+    position:relative;
+  }
+
+  /* ── header ── */
+  .app-header{
+    position:sticky; top:0; z-index:30;
+    display:flex; align-items:center; gap:11px;
+    padding:calc(14px + env(safe-area-inset-top, 0px)) 16px 12px;
+    background:rgba(246,244,250,.94);
+    backdrop-filter:saturate(180%) blur(12px);
+    -webkit-backdrop-filter:saturate(180%) blur(12px);
+    border-bottom:1px solid rgba(196,190,226,.7);
+  }
+  .head-icon{
+    width:42px; height:42px; flex:0 0 42px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:21px;
+    background:var(--brand-soft);
+    border:1px solid var(--brand-line);
+    border-radius:14px;
+  }
+  .head-title{flex:1 1 auto; min-width:0;}
+  .eyebrow{
+    font-size:11.5px; font-weight:700; letter-spacing:.04em;
+    color:var(--brand-deep); margin-bottom:1px;
+  }
+  .head-title h1{
+    margin:0; font-size:20px; font-weight:800; letter-spacing:-.02em;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .reset-btn{
+    flex:0 0 auto;
+    display:inline-flex; align-items:center; gap:4px;
+    padding:8px 12px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    background:#fff;
+    font-size:12.5px; font-weight:600; color:var(--ink-2);
+    white-space:nowrap;
+    box-shadow:0 1px 2px rgba(108,90,114,.04);
+  }
+  .reset-btn:active{background:var(--line-soft);}
+  .backup-btn{border-color:var(--brand-line); color:var(--brand-deep);}
+  @media (max-width:390px){
+    .app-header{gap:8px; padding-left:14px; padding-right:14px;}
+    .reset-btn{padding:8px 10px; font-size:12px;}
+  }
+  @media (max-width:340px){
+    .app-header{gap:6px; padding:calc(12px + env(safe-area-inset-top, 0px)) 10px 10px;}
+    .head-icon{width:36px; height:36px; flex-basis:36px; font-size:18px; border-radius:12px;}
+    .head-title h1{font-size:17px;}
+    .eyebrow{font-size:10.5px;}
+    .reset-btn{padding:6px 8px; font-size:11px; gap:2px;}
+  }
+
+  main{padding:14px 16px 118px;}
+  body.has-cta main{padding-bottom:196px;}
+
+  .view[hidden]{display:none;}
+
+  /* ── summary ── */
+  .summary{
+    display:grid; grid-template-columns:repeat(3,1fr);
+    gap:6px;
+    padding:14px 8px;
+    margin-bottom:16px;
+    border-radius:var(--r-lg);
+    background:linear-gradient(140deg,var(--lilac-200) 0%,#F4F1FA 62%,var(--lilac-100) 100%);
+    border:1px solid var(--brand-line);
+    box-shadow:var(--shadow);
+  }
+  .sum-item{text-align:center; padding:2px 4px;}
+  .sum-label{font-size:11.5px; font-weight:600; color:var(--ink-2); margin-bottom:2px;}
+  .sum-value{font-size:22px; font-weight:800; color:var(--brand-deep); letter-spacing:-.02em; line-height:1.15;}
+  .sum-value .unit{font-size:12px; font-weight:600; color:var(--ink-2); margin-left:1px;}
+  .sum-item + .sum-item{border-left:1px dashed rgba(153,134,179,.25);}
+
+  /* ── search + chips ── */
+  .search-box{position:relative; margin-bottom:12px;}
+  .search-box .ico{
+    position:absolute; left:14px; top:50%; transform:translateY(-50%);
+    font-size:14px; opacity:.55; pointer-events:none;
+  }
+  #fridgeSearch{
+    width:100%; padding:13px 40px 13px 38px;
+    background:#fff; border:1px solid var(--line);
+    border-radius:var(--r-md);
+    box-shadow:0 1px 2px rgba(108,90,114,.03);
+    outline:none;
+  }
+  #fridgeSearch::placeholder{color:#8F87A3;}
+  #fridgeSearch:focus{border-color:var(--brand-line); box-shadow:0 0 0 3px rgba(153,134,179,.08);}
+  .search-clear{
+    position:absolute; right:8px; top:50%; transform:translateY(-50%);
+    width:26px; height:26px; border-radius:999px;
+    display:none; align-items:center; justify-content:center;
+    font-size:14px; color:var(--ink-3); background:var(--line-soft);
+  }
+  .search-box.has-text .search-clear{display:flex;}
+
+  .chips{
+    display:flex; gap:7px; overflow-x:auto;
+    padding:2px 16px 4px; margin:0 -16px 10px;
+    scrollbar-width:none;
+  }
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{
+    flex:0 0 auto;
+    display:inline-flex; align-items:center; gap:5px;
+    padding:8px 13px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:#fff;
+    font-size:12.5px; font-weight:600; color:var(--ink-2);
+    white-space:nowrap;
+  }
+  .chip.on{
+    background:var(--brand-deep); border-color:var(--brand-deep); color:#fff;
+    box-shadow:0 2px 8px rgba(108,90,114,.18);
+  }
+
+  .count-line{
+    font-size:12px; color:var(--ink-3); font-weight:500;
+    margin:0 2px 10px;
+  }
+  .count-line b{color:var(--ink-2); font-weight:700;}
+
+  /* ── cards ── */
+  .card-list{display:flex; flex-direction:column; gap:9px;}
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--r-lg);
+    box-shadow:var(--shadow);
+    padding:12px 12px 12px 14px;
+  }
+
+  .item-card{display:flex; align-items:center; gap:10px;}
+  .item-main{flex:1 1 auto; min-width:0;}
+  .item-name{
+    font-size:15px; font-weight:700; letter-spacing:-.01em;
+    color:var(--ink);
+    word-break:keep-all;
+  }
+  .item-meta{
+    font-size:12px; color:var(--ink-3); margin-top:2px;
+    word-break:keep-all;
+  }
+  .item-card.is-out .item-name{color:var(--ink-3); text-decoration:line-through; text-decoration-color:rgba(126,117,144,.5);}
+
+  .state-btn{
+    flex:0 0 auto;
+    min-width:58px; padding:8px 12px;
+    border-radius:999px;
+    font-size:12.5px; font-weight:700;
+    border:1px solid var(--brand-line);
+    background:var(--brand-soft);
+    color:var(--brand-deep);
+    transition:transform .12s ease;
+  }
+  .state-btn.out{
+    border-color:#DDD8EA;
+    background:#F6F4FA;
+    color:#6C5A72;
+  }
+  .state-btn:active{transform:scale(.96);}
+
+  .del-btn{
+    flex:0 0 auto;
+    width:30px; height:30px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:999px;
+    color:#B5ABC6; font-size:19px; line-height:1;
+  }
+  .del-btn:active{background:var(--line-soft); color:var(--ink-2);}
+
+  /* ── 냉장고 품목 정보 인라인 수정 ── */
+  .edit-btn{
+    flex:0 0 auto;
+    width:30px; height:30px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:999px;
+    border:1px solid var(--brand-line);
+    background:var(--brand-soft);
+    color:var(--brand-deep); font-size:14px; line-height:1;
+  }
+  .edit-btn:active{background:var(--line-soft);}
+  .item-card.is-editing{
+    border-color:var(--brand-line);
+    box-shadow:0 0 0 3px rgba(153,134,179,.07), var(--shadow);
+    align-items:flex-start;
+  }
+
+  /* ── shop card ── */
+  .shop-card{display:flex; gap:8px; align-items:flex-start; padding:12px 10px; position:relative;}
+  .shop-card.is-checked{border-color:#9986B3; background:#FAF8FD;}
+  .fav{
+    flex:0 0 auto; width:24px; padding:4px 0 6px;
+    font-size:18px; line-height:1; text-align:center;
+    color:#CBC3DC;
+  }
+  .fav.on{color:var(--star);}
+  .check{
+    flex:0 0 auto;
+    width:23px; height:23px; margin-top:3px;
+    border-radius:8px;
+    border:1.6px solid #C4BEE2;
+    background:#fff;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:13px; font-weight:800;
+  }
+  .check.on{background:var(--brand); border-color:var(--brand);}
+  .shop-main{flex:1 1 auto; min-width:0; padding-right:26px;}
+  .shop-card > .del-btn{position:absolute; right:2px; top:8px;}
+
+  .shop-tools{
+    display:flex; align-items:center; gap:5px;
+    margin-top:8px; flex-wrap:wrap;
+  }
+  .qty{
+    display:inline-flex; align-items:center;
+    border:1px solid var(--line);
+    border-radius:999px;
+    overflow:hidden;
+    background:#fff;
+  }
+  .qty button{
+    width:28px; height:29px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px; font-weight:600; color:var(--ink-2);
+  }
+  .qty button:active{background:var(--line-soft);}
+  .qty span{
+    min-width:22px; text-align:center;
+    font-size:13px; font-weight:700; color:var(--ink);
+  }
+  .link-btn, .mini-btn{
+    display:inline-flex; align-items:center; gap:3px;
+    padding:6px 9px;
+    border-radius:999px;
+    font-size:11.5px; font-weight:600;
+    border:1px solid var(--line);
+    background:#fff; color:var(--ink-2);
+    white-space:nowrap;
+  }
+  .link-btn{
+    border-color:var(--brand-line);
+    background:var(--brand-soft);
+    color:var(--brand-deep);
+  }
+  .link-btn.no-link{
+    border-color:var(--line);
+    background:#fff;
+    color:var(--ink-3);
+    border-style:dashed;
+  }
+  .mini-btn:active, .link-btn:active{opacity:.7;}
+
+  /* ── 품목 정보 인라인 수정 ── */
+  .shop-card.is-editing{
+    border-color:var(--brand-line);
+    box-shadow:0 0 0 3px rgba(153,134,179,.07), var(--shadow);
+  }
+  .shop-card.is-editing .shop-main{padding-right:0;}
+  .tools-edit{margin-top:6px;}
+  .edit-trigger{color:var(--ink-2);}
+  .item-editor{
+    display:flex; flex-direction:column; gap:7px;
+    padding-top:1px;
+  }
+  .edit-row{display:flex; align-items:center; gap:8px;}
+  .edit-label{
+    flex:0 0 auto; min-width:44px;
+    font-size:11.5px; font-weight:700; color:var(--ink-3);
+    white-space:nowrap;
+  }
+  .edit-row input, .edit-row select{
+    flex:1 1 auto; min-width:0; width:100%;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:#FBFAFD;
+    font-size:13.5px;
+    outline:none;
+  }
+  .edit-row input::placeholder{color:#8F87A3;}
+  .edit-row input:focus, .edit-row select:focus{
+    border-color:var(--brand-line);
+    box-shadow:0 0 0 3px rgba(153,134,179,.09);
+  }
+  .edit-row select{
+    appearance:none; -webkit-appearance:none;
+    background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%236F6780' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 11px center;
+    padding-right:30px;
+  }
+  .edit-actions{display:flex; gap:6px; margin-top:2px;}
+  .edit-actions button{
+    flex:1 1 0; min-width:0;
+    padding:9px 10px;
+    border-radius:10px;
+    font-size:13px; font-weight:800;
+    white-space:nowrap;
+  }
+  .edit-actions .save{background:var(--brand); color:#fff; letter-spacing:-.01em;}
+  .edit-actions .save:active{background:var(--brand-deep);}
+  .edit-actions .cancel{background:var(--line-soft); color:var(--ink-2);}
+
+  .link-editor{
+    margin-top:8px;
+    display:flex; gap:6px; align-items:center;
+  }
+  .link-editor input{
+    flex:1 1 auto; min-width:0;
+    padding:9px 11px;
+    border:1px solid var(--brand-line);
+    border-radius:10px;
+    background:#FBFAFD;
+    font-size:12.5px;
+    outline:none;
+  }
+  .link-editor input:focus{box-shadow:0 0 0 3px rgba(153,134,179,.09);}
+  .link-editor button{
+    flex:0 0 auto;
+    padding:9px 11px;
+    border-radius:10px;
+    font-size:13px; font-weight:800;
+  }
+  .link-editor .save{background:var(--brand); color:#fff;}
+  .link-editor .cancel{background:var(--line-soft); color:var(--ink-2);}
+
+  /* ── add form ── */
+  .add-form{
+    margin-top:14px;
+    padding:13px;
+    border:1px dashed #CFC9E4;
+    border-radius:var(--r-lg);
+    background:rgba(255,255,255,.5);
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .add-form .form-title{
+    font-size:12px; font-weight:700; color:var(--ink-3);
+    padding-left:2px;
+  }
+  .add-form .row{display:flex; gap:8px;}
+  .add-form input, .add-form select{
+    width:100%;
+    padding:12px 12px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:#fff;
+    outline:none;
+    font-size:15px;
+  }
+  .add-form input::placeholder{color:#8F87A3;}
+  .add-form input:focus, .add-form select:focus{border-color:var(--brand-line); box-shadow:0 0 0 3px rgba(153,134,179,.08);}
+  .add-form select{
+    appearance:none; -webkit-appearance:none;
+    background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%236F6780' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 13px center;
+    padding-right:34px;
+  }
+  .submit-btn{
+    padding:13px 16px;
+    border-radius:12px;
+    background:var(--brand);
+    color:#fff;
+    font-size:14px; font-weight:800;
+    box-shadow:0 2px 8px rgba(153,134,179,.22);
+  }
+  .submit-btn:active{background:var(--brand-deep);}
+  .add-hint{font-size:11.5px; color:var(--ink-3); padding:0 2px;}
+
+  .empty{
+    padding:26px 16px;
+    text-align:center;
+    border:1px dashed #CFC9E4;
+    border-radius:var(--r-lg);
+    color:var(--ink-3);
+    font-size:13px;
+    background:rgba(255,255,255,.45);
+  }
+
+  /* ── 주문 내역 붙여넣기 ── */
+  .paste-import{margin:0 0 10px;}
+  .paste-toggle{
+    width:100%;
+    display:flex; align-items:center; gap:8px;
+    padding:12px 14px;
+    border:1px dashed var(--brand-line);
+    border-radius:var(--r-md);
+    background:rgba(224,219,239,.42);
+    font-size:13px; font-weight:700; color:var(--brand-deep);
+    text-align:left;
+  }
+  .paste-toggle:active{background:rgba(224,219,239,.7);}
+  .paste-toggle .pi-ico{font-size:15px; line-height:1;}
+  .paste-toggle .pi-text{flex:1 1 auto; min-width:0;}
+  .paste-toggle .pi-chev{
+    flex:0 0 auto; font-size:12px; color:var(--brand);
+    transition:transform .16s ease;
+  }
+  .paste-import.open .paste-toggle .pi-chev{transform:rotate(180deg);}
+  .paste-panel{
+    margin-top:8px; padding:12px;
+    display:flex; flex-direction:column; gap:8px;
+    border:1px solid var(--brand-line);
+    border-radius:var(--r-lg);
+    background:var(--card);
+    box-shadow:var(--shadow);
+  }
+  .paste-panel[hidden]{display:none;}
+  .paste-hint{margin:0; font-size:11.5px; color:var(--ink-3); line-height:1.45;}
+  .paste-panel textarea{
+    width:100%; min-height:112px; max-height:34vh;
+    padding:11px 12px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:#FBFAFD;
+    font-size:13.5px; line-height:1.55;
+    resize:vertical; outline:none;
+  }
+  .paste-panel textarea::placeholder{color:#8F87A3;}
+  .paste-panel textarea:focus{border-color:var(--brand); box-shadow:0 0 0 3px rgba(153,134,179,.14);}
+  /* 기록하기 바로 위: 가계부 내역을 냉장고 재고에도 반영할지 */
+  .paste-sync{
+    display:flex; align-items:center; gap:8px;
+    padding:9px 11px;
+    border:1px solid var(--line-soft);
+    border-radius:12px;
+    background:#FBFAFD;
+    cursor:pointer;
+  }
+  .paste-sync input{
+    flex:0 0 auto;
+    width:17px; height:17px; margin:0;
+    accent-color:var(--brand);
+  }
+  .paste-sync .ps-label{
+    flex:1 1 auto; min-width:0;
+    font-size:12.5px; font-weight:700; color:var(--ink-2);
+  }
+  .paste-actions{display:flex; gap:8px;}
+  .paste-actions button{
+    flex:1 1 0; min-width:0;
+    padding:12px 10px;
+    border-radius:12px;
+    font-size:13.5px; font-weight:800;
+    white-space:nowrap;
+  }
+  .paste-submit{background:var(--brand); color:#fff;}
+  .paste-submit:active{background:var(--brand-deep);}
+  .paste-cancel{background:var(--line-soft); color:var(--ink-2);}
+
+  /* ── shop toolbar ── */
+  .shop-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:8px; margin-bottom:10px;
+  }
+  .shop-bar .sel{
+    font-size:12.5px; color:var(--ink-3); font-weight:600;
+  }
+  .shop-bar .sel b{color:var(--brand-deep);}
+  .sort-btn{
+    padding:7px 11px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    background:#fff;
+    font-size:12px; font-weight:600; color:var(--ink-2);
+    white-space:nowrap;
+  }
+  .sort-btn.on{border-color:var(--brand-line); background:var(--brand-soft); color:var(--brand-deep);}
+
+  /* ── 냉장고로 보내기 / 장바구니 ── */
+  .mini-btn.fridge-btn{
+    border-color:var(--brand-line);
+    background:var(--brand-soft);
+    color:var(--brand-deep);
+  }
+
+  .cart-top{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:8px; margin-bottom:10px;
+  }
+  .cart-total{font-size:12.5px; font-weight:600; color:var(--ink-3);}
+  .cart-total b{color:var(--brand-deep); font-weight:800;}
+  .clear-btn{
+    flex:0 0 auto;
+    display:inline-flex; align-items:center; gap:4px;
+    padding:7px 11px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    background:#fff;
+    font-size:12px; font-weight:600; color:var(--ink-2);
+    white-space:nowrap;
+  }
+  .clear-btn:active{background:var(--line-soft);}
+  .clear-btn[disabled]{opacity:.45;}
+
+  .cart-card{
+    display:flex; align-items:flex-start; gap:8px;
+    padding:12px 10px 12px 14px; position:relative;
+  }
+  .cart-main{flex:1 1 auto; min-width:0; padding-right:22px;}
+  .cart-card > .del-btn{position:absolute; right:2px; top:8px;}
+
+  .fridge-move-btn{
+    width:100%;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    margin-top:10px; padding:11px 12px;
+    border:1px solid var(--brand-line);
+    border-radius:var(--r-md);
+    background:#fff;
+    color:var(--brand-deep);
+    font-size:12.5px; font-weight:700;
+  }
+  .fridge-move-btn:active{background:var(--brand-soft);}
+  .fridge-move-btn[disabled]{opacity:.45;}
+  .cart-hint{
+    margin:6px 2px 0;
+    font-size:11.5px; line-height:1.45; color:var(--ink-3);
+    word-break:keep-all;
+  }
+
+  /* ── 좁은 화면(320px) 보정 ── */
+  @media (max-width:340px){
+    .cta-btn{font-size:13px; padding:14px 12px;}
+    .mini-btn, .link-btn{font-size:11px; padding:6px 8px;}
+    .qty button{width:26px;}
+    .qty span{min-width:20px;}
+    .tab{font-size:10.5px;}
+    .state-btn{min-width:52px; padding:8px 10px;}
+  }
+
+  /* ── 메뉴 추천(레시피) ── */
+  .menu-hint{
+    margin:-6px 2px 12px;
+    font-size:11.5px; line-height:1.5; color:var(--ink-3);
+    word-break:keep-all;
+  }
+  .recipe-card{position:relative; padding:13px 12px 12px 14px;}
+  .recipe-head{
+    display:flex; align-items:center; gap:7px;
+    flex-wrap:wrap; padding-right:22px;
+  }
+  .recipe-name{
+    flex:1 1 auto; min-width:120px;
+    font-size:15px; font-weight:800; letter-spacing:-.01em;
+    word-break:keep-all; overflow-wrap:break-word;
+  }
+  .recipe-badge{
+    flex:0 0 auto;
+    padding:4px 9px; border-radius:999px;
+    font-size:11px; font-weight:800; line-height:1.3;
+    letter-spacing:-.01em; white-space:nowrap;
+  }
+  .recipe-badge.ok{background:var(--brand-deep); color:#fff;}
+  .recipe-badge.soon{background:var(--brand-soft); color:var(--brand-deep); border:1px solid var(--brand-line);}
+  .recipe-badge.far{background:#fff; color:var(--ink-3); border:1px dashed var(--line);}
+
+  .recipe-tags{display:flex; flex-wrap:wrap; gap:5px; margin-top:9px;}
+  .ing{
+    display:inline-flex; align-items:center; gap:3px;
+    padding:5px 8px; border-radius:999px;
+    font-size:11.5px; font-weight:600; line-height:1.25;
+    white-space:nowrap; word-break:keep-all;
+  }
+  .ing .ing-mark{font-size:10px; font-weight:800;}
+  .ing.have{background:var(--lilac-200); color:var(--brand-deep);}
+  .ing.miss{border:1.4px solid var(--brand); background:#fff; color:var(--brand-deep); font-weight:700;}
+
+  .recipe-memo{
+    margin-top:8px; font-size:12px; line-height:1.45;
+    color:var(--ink-3); word-break:keep-all;
+  }
+  .recipe-actions{display:flex; flex-wrap:wrap; gap:5px; margin-top:10px;}
+  .recipe-card > .del-btn{position:absolute; right:2px; top:6px;}
+  .recipe-card.is-editing{
+    border-color:var(--brand-line);
+    box-shadow:0 0 0 3px rgba(153,134,179,.07), var(--shadow);
+  }
+  .recipe-editor{margin-top:2px;}
+
+  /* ── 메뉴 추천 섹션 / 추천 요리 / 됴니에게 묻기 ── */
+  .menu-sec{margin-top:18px;}
+  .menu-sec-head{
+    display:flex; align-items:center; gap:6px;
+    margin:0 2px 8px;
+  }
+  .menu-sec-head h2{
+    margin:0; font-size:13px; font-weight:800; letter-spacing:-.01em;
+    color:var(--ink); word-break:keep-all;
+  }
+  .menu-sec-head .sec-n{
+    flex:0 0 auto;
+    min-width:22px; padding:2px 7px;
+    border-radius:999px;
+    background:var(--lilac-200); color:var(--brand-deep);
+    font-size:11px; font-weight:800; line-height:1.35; text-align:center;
+  }
+  .sec-hint{
+    margin:-2px 2px 9px;
+    font-size:11.5px; line-height:1.45; color:var(--ink-3);
+    word-break:keep-all;
+  }
+  .ask-btn{
+    width:100%;
+    display:flex; align-items:center; justify-content:center; gap:5px;
+    margin:0 0 2px; padding:11px 10px;
+    border:1px dashed var(--brand-line);
+    border-radius:var(--r-md);
+    background:#fff;
+    color:var(--brand-deep);
+    font-size:12px; font-weight:700; line-height:1.35;
+    text-align:center; word-break:keep-all;
+  }
+  .ask-btn:active{background:var(--brand-soft);}
+  .recipe-card.suggest-card{
+    background:linear-gradient(160deg,#FFFFFF 0%,#FBF9FE 100%);
+  }
+  .recipe-card.suggest-card .recipe-head{padding-right:0;}
+  .menu-sec .card-list:empty{display:none;}
+
+  /* ── 메뉴 추천 하위 탭 (요리 추천 / 주간 식단표) ── */
+  .seg{
+    display:flex; gap:4px;
+    padding:4px; margin:0 0 12px;
+    border-radius:14px;
+    background:var(--lilac-200);
+    border:1px solid var(--brand-line);
+  }
+  .seg-btn{
+    flex:1 1 0; min-width:0;
+    display:flex; align-items:center; justify-content:center; gap:4px;
+    padding:9px 4px;
+    border-radius:11px;
+    font-size:12.5px; font-weight:700; letter-spacing:-.01em;
+    color:var(--ink-2);
+    white-space:nowrap; overflow:hidden;
+  }
+  .seg-btn.on{
+    background:#fff; color:var(--brand-deep); font-weight:800;
+    box-shadow:0 1px 3px rgba(108,90,114,.16);
+  }
+  #paneCook[hidden], #panePlan[hidden]{display:none;}
+
+  /* ── 주간 식단표 ── */
+  .plan-bar{
+    padding:12px 13px 13px; margin-bottom:12px;
+    border-radius:var(--r-lg);
+    background:linear-gradient(140deg,var(--lilac-200) 0%,#F4F1FA 62%,var(--lilac-100) 100%);
+    border:1px solid var(--brand-line);
+    box-shadow:var(--shadow);
+  }
+  .plan-progress{display:flex; align-items:baseline; justify-content:space-between; gap:6px;}
+  .plan-progress-label{font-size:12.5px; font-weight:700; color:var(--brand-deep); letter-spacing:-.01em;}
+  .plan-progress-label b{font-size:16px; font-weight:800; margin:0 1px;}
+  .plan-progress-pct{font-size:11.5px; font-weight:700; color:var(--ink-3);}
+  .plan-track{
+    height:7px; margin:8px 0 11px;
+    border-radius:999px; overflow:hidden;
+    background:rgba(153,134,179,.2);
+  }
+  .plan-fill{height:100%; width:0; border-radius:999px; background:var(--brand); transition:width .22s ease;}
+  .plan-btns{display:flex; gap:6px;}
+  .plan-auto{
+    flex:1 1 auto; min-width:0;
+    padding:11px 8px; border-radius:11px;
+    background:var(--brand-deep); color:#fff;
+    font-size:12.5px; font-weight:800; letter-spacing:-.01em;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    box-shadow:0 2px 8px rgba(108,90,114,.18);
+  }
+  .plan-auto:active{background:#5A4B60;}
+  .plan-clear{
+    flex:0 0 auto; padding:11px 11px; border-radius:11px;
+    background:#fff; border:1px solid var(--brand-line);
+    color:var(--ink-2); font-size:12px; font-weight:700; white-space:nowrap;
+  }
+  .plan-clear:active{background:var(--line-soft);}
+  .plan-hint{margin:0 2px 9px; font-size:11.5px; line-height:1.45; color:var(--ink-3); word-break:keep-all;}
+
+  .plan-card{padding:11px 12px;}
+  .plan-card.is-done{border-color:var(--brand-line); background:#FBFAFD;}
+  .plan-head{display:flex; align-items:flex-start; gap:8px;}
+  .plan-check{
+    flex:0 0 auto; width:23px; height:23px; margin-top:1px;
+    border-radius:8px; border:1.6px solid var(--lilac-300); background:#fff;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:13px; font-weight:800; line-height:1;
+  }
+  .plan-check.on{background:var(--brand); border-color:var(--brand);}
+  .plan-day{
+    flex:0 0 auto; min-width:26px; padding:4px 7px;
+    border-radius:8px; background:var(--lilac-200); color:var(--brand-deep);
+    font-size:11.5px; font-weight:800; line-height:1.2; text-align:center;
+  }
+  .plan-day.wknd{background:var(--lilac-300); color:#4E4055;}
+  .plan-main{flex:1 1 auto; min-width:0;}
+  .plan-name{
+    font-size:14.5px; font-weight:800; letter-spacing:-.01em;
+    word-break:keep-all; overflow-wrap:break-word;
+  }
+  .plan-card.is-done .plan-name{color:var(--ink-3); text-decoration:line-through; text-decoration-color:rgba(126,117,144,.55);}
+  .plan-note{display:block; margin-top:3px; font-size:11px; font-weight:700; line-height:1.3; word-break:keep-all;}
+  .plan-note.ok{color:var(--brand-deep);}
+  .plan-note.soon{color:#8A6F45;}
+  .plan-note.custom{color:var(--ink-3);}
+  .recipe-tags.plan-tags{margin-top:6px; gap:4px;}
+  .plan-tags .ing{padding:4px 7px; font-size:11px;}
+  .recipe-actions.plan-actions{margin-top:9px; gap:5px;}
+  .plan-edit{display:flex; align-items:center; gap:6px; margin-top:2px;}
+  .plan-edit input{
+    flex:1 1 auto; min-width:0; width:100%;
+    padding:8px 10px; border:1px solid var(--brand-line); border-radius:10px;
+    background:#FBFAFD; font-size:13.5px; outline:none;
+  }
+  .plan-edit input::placeholder{color:#8F87A3;}
+  .plan-edit input:focus{box-shadow:0 0 0 3px rgba(153,134,179,.14);}
+  .plan-edit .save{
+    flex:0 0 auto; padding:8px 11px; border-radius:10px;
+    background:var(--brand); color:#fff; font-size:12.5px; font-weight:800; white-space:nowrap;
+  }
+  .plan-edit .cancel{
+    flex:0 0 auto; padding:8px 10px; border-radius:10px;
+    background:var(--line-soft); color:var(--ink-2); font-size:12.5px; font-weight:800; white-space:nowrap;
+  }
+  @media (max-width:340px){
+    .seg-btn{font-size:11.5px;}
+    .plan-auto{font-size:11.5px; padding:11px 6px;}
+    .plan-clear{font-size:11px; padding:11px 9px;}
+    .plan-day{min-width:22px; padding:4px 5px;}
+    .plan-name{font-size:14px;}
+  }
+
+  /* ── 좁은 화면(320px) 보정 ── */
+  @media (max-width:360px){
+    .tab{font-size:10px; padding:7px 2px 6px;}
+  }
+
+  /* ── 📒 가계부 ── */
+  .ledger-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:6px; margin:0 0 9px;
+  }
+  .lm-btn{
+    flex:0 0 auto;
+    width:34px; height:34px;
+    display:flex; align-items:center; justify-content:center;
+    border:1px solid var(--brand-line); border-radius:11px;
+    background:#fff; color:var(--brand-deep);
+    font-size:12px; font-weight:800; line-height:1;
+  }
+  .lm-btn:active{background:var(--brand-soft);}
+  .lm-btn[disabled]{opacity:.32;}
+  .lm-label{
+    flex:1 1 auto; min-width:0; text-align:center;
+    font-size:14.5px; font-weight:800; letter-spacing:-.01em; color:var(--brand-deep);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .ledger-sum{
+    display:grid; grid-template-columns:repeat(3,1fr);
+    gap:3px; padding:13px 5px 12px;
+    border-radius:var(--r-lg);
+    background:linear-gradient(140deg,var(--lilac-200) 0%,#F4F1FA 62%,var(--lilac-100) 100%);
+    border:1px solid var(--brand-line);
+    box-shadow:var(--shadow);
+  }
+  .lg-item{text-align:center; padding:2px 2px; min-width:0;}
+  .lg-item + .lg-item{border-left:1px dashed rgba(153,134,179,.25);}
+  .lg-label{
+    font-size:11px; font-weight:700; color:var(--ink-2); margin-bottom:3px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .lg-value{
+    font-size:15px; font-weight:800; color:var(--brand-deep);
+    letter-spacing:-.03em; line-height:1.25;
+    white-space:nowrap; overflow:hidden;
+  }
+  .lg-value .unit{font-size:10.5px; font-weight:700; color:var(--ink-2); margin-left:1px; letter-spacing:0;}
+  .lg-sub{
+    margin-top:3px; font-size:10.5px; font-weight:700; line-height:1.3; color:var(--ink-3);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .lg-sub.save{color:#3C7A5B;}
+  .lg-sub.spend{color:#8A5A63;}
+  .lg-note{
+    margin:7px 2px 13px;
+    font-size:11.5px; line-height:1.45; color:var(--ink-3);
+    word-break:keep-all;
+  }
+  .ledger-card{display:flex; align-items:center; gap:6px; padding:11px 6px 11px 13px;}
+  .lg-main{flex:1 1 auto; min-width:0;}
+  .lg-top{display:flex; align-items:center; gap:6px; margin-bottom:3px; flex-wrap:wrap;}
+  .lg-date{font-size:11.5px; font-weight:700; color:var(--ink-3); white-space:nowrap;}
+  .lg-desc{
+    font-size:14px; font-weight:700; letter-spacing:-.01em;
+    word-break:keep-all; overflow-wrap:break-word;
+  }
+  .lg-amt{
+    flex:0 0 auto; text-align:right;
+    font-size:15px; font-weight:800; color:var(--ink);
+    letter-spacing:-.03em; white-space:nowrap;
+  }
+  .lg-amt .unit{font-size:10.5px; font-weight:700; color:var(--ink-2); margin-left:1px; letter-spacing:0;}
+  .lg-amt-input{flex:0 0 38%; min-width:0;}
+  .lg-cat{
+    flex:0 1 auto; min-width:0;
+    font-size:10.5px; font-weight:700; color:var(--brand-deep);
+    background:var(--brand-soft); border-radius:999px; padding:2px 7px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  /* ✎ 지출 내역 인라인 수정 — 삭제(×)와 헷갈리지 않게 색을 다르게, 터치 크기는 30px 유지 */
+  .lg-edit-btn{
+    flex:0 0 auto;
+    width:30px; height:30px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:999px;
+    background:var(--brand-soft);
+    color:var(--brand-deep);
+    font-size:14px; font-weight:700; line-height:1;
+  }
+  .lg-edit-btn:active{background:var(--lilac-300); color:#fff;}
+  .ledger-card.is-editing{
+    padding:11px 13px;
+    border-color:var(--brand-line);
+    box-shadow:0 0 0 3px rgba(153,134,179,.07), var(--shadow);
+  }
+  .lg-editor .edit-label{min-width:42px;}
+
+  /* 가계부 품목군 필터: 이름만 · 2칸씩 두 줄로 한 화면에 다 보이게 */
+  .lg-chips{
+    display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:6px; padding:0; margin:0 0 11px; overflow:visible;
+  }
+  .lg-chips .chip{
+    justify-content:center; padding:8px 10px; font-size:12.5px;
+    min-width:0; overflow:hidden; text-overflow:ellipsis;
+  }
+
+  /* 📊 카테고리별 식비 비율 */
+  .lg-ratio{margin-top:11px;}
+  .lg-ratio-head{
+    display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap;
+    gap:4px 8px; margin-bottom:10px;
+  }
+  .lg-ratio-title{
+    flex:1 1 auto; min-width:0;
+    font-size:13px; font-weight:800; letter-spacing:-.01em; color:var(--brand-deep);
+    margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .lg-ratio-total{
+    flex:0 0 auto; margin-left:auto;
+    font-size:11px; font-weight:700; color:var(--ink-3);
+    white-space:nowrap;
+  }
+  .lg-ratio-row + .lg-ratio-row{margin-top:10px;}
+  .lg-ratio-top{
+    display:flex; align-items:baseline; justify-content:space-between;
+    gap:8px; margin-bottom:5px;
+  }
+  .lg-ratio-name{
+    flex:1 1 auto; min-width:0;
+    font-size:12.5px; font-weight:700; color:var(--ink-2);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .lg-ratio-num{
+    flex:0 0 auto; font-size:11.5px; font-weight:700; color:var(--ink-3);
+    white-space:nowrap; letter-spacing:-.01em;
+  }
+  .lg-ratio-num .pct{font-size:13px; font-weight:800; color:var(--brand-deep); letter-spacing:-.02em;}
+  .lg-ratio-num .sep{color:var(--lilac-300); margin:0 3px;}
+  .lg-ratio-track{
+    height:8px; border-radius:999px; background:#E0DBEF;
+    overflow:hidden;
+  }
+  .lg-ratio-bar{height:100%; border-radius:999px; min-width:0;}
+  .lg-ratio-bar.nz{min-width:5px;}
+  .lg-ratio-bar.c1{background:#9986B3;}
+  .lg-ratio-bar.c2{background:#6C5A72;}
+  .lg-ratio-bar.c3{background:#C4BEE2;}
+  .lg-ratio-empty{
+    font-size:12px; line-height:1.5; color:var(--ink-3);
+    padding:4px 2px 2px; word-break:keep-all;
+  }
+  .lg-ratio-empty-sub{display:block; font-size:11px; color:var(--ink-3); opacity:.85;}
+  @media (max-width:340px){
+    .lg-label{font-size:10.5px;}
+    .lg-value{font-size:13.5px;}
+    .lg-sub{font-size:10px;}
+    .lg-amt{font-size:14px;}
+    .lm-label{font-size:13.5px;}
+  }
+
+  /* ── bottom nav ── */
+  .tabbar{
+    position:fixed; left:0; right:0; bottom:0; z-index:40;
+    max-width:480px; margin:0 auto;
+    display:flex;
+    gap:4px;
+    padding:7px 10px calc(7px + env(safe-area-inset-bottom, 0px));
+    background:rgba(255,255,255,.93);
+    backdrop-filter:saturate(180%) blur(16px);
+    -webkit-backdrop-filter:saturate(180%) blur(16px);
+    border-top:1px solid var(--line);
+  }
+  .tab{
+    flex:1 1 0;
+    position:relative;
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    padding:7px 4px 6px;
+    border-radius:14px;
+    color:var(--ink-3);
+    font-size:11px; font-weight:600;
+  }
+  .tab .tab-ico{font-size:19px; line-height:1; filter:grayscale(1); opacity:.62;}
+  .tab .tab-txt{
+    display:block; max-width:100%;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    line-height:1.15;
+  }
+  .tab.on{background:var(--brand-soft); color:var(--brand-deep); font-weight:800;}
+  .tab.on .tab-ico{filter:none; opacity:1;}
+  .tab .badge{
+    position:absolute; top:3px; right:calc(50% - 26px);
+    min-width:17px; height:17px; padding:0 4px;
+    border-radius:999px;
+    background:var(--brand-deep); color:#fff;
+    font-size:10.5px; font-weight:800; line-height:17px; text-align:center;
+    box-shadow:0 0 0 2px #fff;
+  }
+  .tab .badge[hidden]{display:none;}
+
+  /* ── 하단 5개 탭 폭 보정 (320·360px 에서도 한 줄) ──
+     .tab 기본값보다 뒤에 두어야 미디어 쿼리가 실제로 적용된다. */
+  @media (max-width:360px){
+    .tabbar{gap:3px; padding:6px 8px calc(6px + env(safe-area-inset-bottom, 0px));}
+    .tab{font-size:10px; padding:6px 1px 5px; letter-spacing:-.02em;}
+    .tab .tab-ico{font-size:17px;}
+    .tab .badge{right:calc(50% - 21px); top:1px;}
+  }
+  @media (max-width:340px){
+    .tabbar{gap:3px; padding:6px 6px calc(6px + env(safe-area-inset-bottom, 0px));}
+    .tab{font-size:9.5px; padding:6px 0 5px;}
+    .tab .tab-ico{font-size:16px;}
+    .tab .badge{right:calc(50% - 19px);}
+  }
+
+  /* ── CTA ── */
+  .cta-bar{
+    position:fixed; left:0; right:0; z-index:35;
+    bottom:calc(66px + env(safe-area-inset-bottom, 0px));
+    max-width:480px; margin:0 auto;
+    padding:8px 16px 10px;
+    background:linear-gradient(to top, rgba(246,244,250,.98) 55%, rgba(246,244,250,0));
+    pointer-events:none;
+  }
+  .cta-bar[hidden]{display:none;}
+  .cta-btn{
+    width:100%;
+    pointer-events:auto;
+    padding:15px 14px;
+    border-radius:15px;
+    background:var(--brand-deep);
+    color:#fff;
+    font-size:14.5px; font-weight:800; letter-spacing:-.01em;
+    box-shadow:0 6px 18px rgba(108,90,114,.24);
+    transition:transform .12s ease, background .15s ease;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .cta-btn:active{transform:translateY(1px); background:#5A4B60;}
+  .cta-btn.dim{background:var(--brand-soft); box-shadow:none; color:var(--brand-deep);}
+
+  /* ── toast ── */
+  .toast{
+    position:fixed; left:50%; bottom:calc(150px + env(safe-area-inset-bottom, 0px));
+    transform:translate(-50%, 12px);
+    max-width:min(420px, calc(100% - 32px));
+    display:flex; align-items:center; gap:10px;
+    padding:12px 15px;
+    border-radius:13px;
+    background:rgba(46,38,50,.94);
+    color:#fff;
+    font-size:13px; font-weight:600;
+    box-shadow:0 8px 24px rgba(46,38,50,.24);
+    opacity:0; pointer-events:none;
+    transition:opacity .18s ease, transform .18s ease;
+    z-index:60;
+    line-height:1.35;
+  }
+  .toast.show{opacity:1; transform:translate(-50%,0); pointer-events:auto;}
+  .toast-undo{
+    flex:0 0 auto;
+    padding:5px 9px;
+    border-radius:8px;
+    background:rgba(255,255,255,.16);
+    color:#E0DBEF;
+    font-size:12px; font-weight:800;
+  }
+
+  /* ── modal ── */
+  .modal-backdrop{
+    position:fixed; inset:0; z-index:70;
+    display:flex; align-items:flex-end; justify-content:center;
+    padding:16px calc(16px + env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px));
+    background:rgba(46,38,50,.42);
+  }
+  .modal-backdrop[hidden]{display:none;}
+  .modal{
+    width:100%; max-width:448px;
+    background:#fff;
+    border-radius:20px;
+    padding:18px 16px 16px;
+    box-shadow:0 20px 50px rgba(46,38,50,.3);
+  }
+  .modal h2{margin:0 0 4px; font-size:16px; font-weight:800;}
+  .modal .modal-sub{margin:0 0 10px; font-size:12.5px; color:var(--ink-3);}
+  #copyText{
+    width:100%; min-height:168px; max-height:38vh;
+    padding:12px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:#F7F5FB;
+    font-size:13px; line-height:1.5;
+    resize:vertical;
+    outline:none;
+  }
+  .modal-btns{display:flex; gap:8px; margin-top:12px;}
+  .modal-btns button{
+    flex:1 1 0;
+    padding:13px;
+    border-radius:12px;
+    font-size:14px; font-weight:800;
+  }
+  .modal-btns .primary{background:var(--brand); color:#fff;}
+  .modal-btns .ghost{background:var(--line-soft); color:var(--ink-2);}
+
+  /* ── 데이터 백업 · 복원 ── */
+  .backup-modal{max-height:88vh; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  .bk-sec{margin-top:12px; padding-top:12px; border-top:1px dashed rgba(153,134,179,.3);}
+  .bk-sec:first-of-type{border-top:none; margin-top:4px; padding-top:0;}
+  .bk-sec-title{font-size:12.5px; font-weight:800; color:var(--brand-deep); margin-bottom:6px;}
+  .bk-hint{margin:0 0 8px; font-size:11.5px; line-height:1.45; color:var(--ink-3); word-break:keep-all;}
+  .bk-btns{display:flex; gap:6px; flex-wrap:wrap;}
+  .bk-btn{
+    flex:1 1 0; min-width:0;
+    display:inline-flex; align-items:center; justify-content:center; gap:4px;
+    padding:11px 10px;
+    border:1px solid var(--brand-line); border-radius:11px;
+    background:#fff; color:var(--brand-deep);
+    font-size:12.5px; font-weight:800; letter-spacing:-.01em;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    cursor:pointer;
+  }
+  .bk-btn.primary{background:var(--brand); border-color:var(--brand); color:#fff;}
+  .bk-btn.primary:active{background:var(--brand-deep);}
+  .bk-btn:active{opacity:.82;}
+  .bk-btn.wide{flex:1 1 100%; width:100%; margin-top:7px;}
+  .bk-text{
+    width:100%; min-height:82px; max-height:26vh; margin-top:8px;
+    padding:10px 11px;
+    border:1px solid var(--line); border-radius:11px;
+    background:#F7F5FB;
+    font-family:ui-monospace, Menlo, Consolas, monospace;
+    font-size:11.5px; line-height:1.45;
+    word-break:break-all; resize:vertical; outline:none;
+  }
+  .bk-text::placeholder{color:#8F87A3; font-family:inherit;}
+  .bk-text:focus{border-color:var(--brand); box-shadow:0 0 0 3px rgba(153,134,179,.12);}
+  .bk-file{position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); opacity:0; pointer-events:none;}
+  .file-label{position:relative;}
+  @media (max-width:340px){
+    .bk-btn{font-size:11.5px; padding:10px 8px;}
+    .modal h2{font-size:15px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <div class="head-icon" id="headIcon" aria-hidden="true">🧊</div>
+    <div class="head-title">
+      <div class="eyebrow">우리집 식탁</div>
+      <h1 id="headTitle">냉장고 재고</h1>
+    </div>
+    <button class="reset-btn backup-btn" id="backupBtn" type="button" aria-label="데이터 백업 및 복원 열기">💾 백업</button>
+    <button class="reset-btn" id="resetBtn" type="button">↻ 초기화</button>
+  </header>
+
+  <main>
+    <!-- ══════════ 냉장고 재고 ══════════ -->
+    <section class="view" id="view-fridge" role="tabpanel" aria-labelledby="tabFridge">
+      <div class="summary" id="fridgeSummary"></div>
+
+      <div class="search-box" id="searchBox">
+        <span class="ico" aria-hidden="true">🔍</span>
+        <input id="fridgeSearch" type="text" inputmode="search" enterkeyhint="search" autocomplete="off"
+               placeholder="재료 이름으로 찾기" aria-label="재료 이름으로 찾기">
+        <button class="search-clear" id="searchClear" type="button" aria-label="검색어 지우기">✕</button>
+      </div>
+
+      <div class="chips" id="fridgeChips" role="group" aria-label="카테고리 필터"></div>
+      <div class="count-line" id="fridgeCount"></div>
+      <div class="card-list" id="fridgeList"></div>
+
+      <form class="add-form" id="fridgeForm" autocomplete="off">
+        <div class="form-title">+ 냉장고에 품목 추가</div>
+        <div class="row">
+          <input id="fridgeName" type="text" placeholder="품목명 (예: 두부)" required aria-label="품목명">
+        </div>
+        <div class="row">
+          <input id="fridgeMemo" type="text" placeholder="메모 (예: 1팩, 찌개용)" aria-label="메모">
+          <select id="fridgeCat" aria-label="카테고리"></select>
+        </div>
+        <button class="submit-btn" type="submit">+ 추가</button>
+      </form>
+    </section>
+
+    <!-- ══════════ 자주 사는 품목 ══════════ -->
+    <section class="view" id="view-shop" role="tabpanel" aria-labelledby="tabShop" hidden>
+      <div class="chips" id="shopChips" role="group" aria-label="자주 사는 품목 카테고리"></div>
+      <div class="shop-bar">
+        <div class="sel" id="shopSel"></div>
+        <button class="sort-btn" id="sortBtn" type="button">정렬: 등록순</button>
+      </div>
+      <div class="card-list" id="shopList"></div>
+
+      <form class="add-form" id="shopForm" autocomplete="off">
+        <div class="form-title">+ 자주 사는 품목 추가</div>
+        <div class="row">
+          <input id="shopName" type="text" placeholder="품목명 (예: 탐사 샘물 2L 12개)" required aria-label="품목명">
+        </div>
+        <div class="row">
+          <input id="shopMemo" type="text" placeholder="규격·메모 (예: 2L × 12)" aria-label="규격 메모">
+          <select id="shopCat" aria-label="카테고리"></select>
+        </div>
+        <div class="row">
+          <input id="shopUrl" type="text" inputmode="url" placeholder="쿠팡 링크 (선택, https://...)" aria-label="쿠팡 링크">
+        </div>
+        <button class="submit-btn" type="submit">+ 추가</button>
+        <div class="add-hint">링크는 나중에 카드에서 붙여도 돼요. 비워두면 쿠팡 검색으로 연결돼요.</div>
+      </form>
+    </section>
+
+    <!-- ══════════ 장바구니 ══════════ -->
+    <section class="view" id="view-cart" role="tabpanel" aria-labelledby="tabCart" hidden>
+      <div class="cart-top">
+        <div class="cart-total" id="cartTotal"></div>
+        <button class="clear-btn" id="cartClear" type="button">🧺 비우기</button>
+      </div>
+      <div class="card-list" id="cartList"></div>
+
+      <button class="fridge-move-btn" id="cartToFridge" type="button">🧊 담은 품목 냉장고로 옮기기</button>
+      <p class="cart-hint">주문이 끝난 뒤 누르면 장바구니 품목을 냉장고에 <b>보유</b>로 넣고 장바구니를 비워요.</p>
+    </section>
+
+    <!-- ══════════ 메뉴 추천 ══════════ -->
+    <section class="view" id="view-menu" role="tabpanel" aria-labelledby="tabMenu" hidden>
+      <div class="seg" id="menuSeg" role="tablist" aria-label="메뉴 추천 화면 전환">
+        <button class="seg-btn on" id="segCook" type="button" role="tab" aria-selected="true" aria-controls="paneCook" data-pane="cook">🍳 요리 추천</button>
+        <button class="seg-btn" id="segPlan" type="button" role="tab" aria-selected="false" aria-controls="panePlan" data-pane="plan">📅 주간 식단표</button>
+      </div>
+
+      <div id="paneCook">
+        <div class="summary" id="menuSummary"></div>
+        <p class="menu-hint">냉장고에 <b>보유</b> 중인 재료와 레시피 재료 이름을 맞춰 봤어요.</p>
+
+        <div class="chips" id="menuChips" role="group" aria-label="레시피 상태 필터"></div>
+
+        <button class="ask-btn" id="askMenuBtn" type="button" aria-label="현재 보유 재료로 됴니에게 메뉴 물어보기 문구 복사">🤖 현재 보유 재료로 됴니에게 메뉴 물어보기 복사</button>
+
+        <div class="menu-sec">
+          <div class="menu-sec-head">
+            <h2>📖 내가 등록한 레시피</h2>
+            <span class="sec-n" id="menuMyCount">0</span>
+          </div>
+          <div class="card-list" id="menuList"></div>
+        </div>
+
+        <form class="add-form" id="recipeForm" autocomplete="off">
+          <div class="form-title">+ 내 레시피 등록</div>
+          <div class="row">
+            <input id="recipeName" type="text" placeholder="요리 이름 (예: 이북식 찜닭)" required aria-label="요리 이름">
+          </div>
+          <div class="row">
+            <input id="recipeItems" type="text" placeholder="필요 재료 (쉼표로 구분: 닭다리살, 깐마늘, 대파)" aria-label="필요 재료">
+          </div>
+          <div class="row">
+            <input id="recipeMemo" type="text" placeholder="조리법·메모 (예: 간장·참기름 양념해 40분 찌기)" aria-label="조리법 메모">
+          </div>
+          <button class="submit-btn" type="submit">+ 레시피 추가</button>
+          <div class="add-hint">재료는 쉼표로 나눠 적으면 냉장고 재고와 자동으로 맞춰져요.</div>
+        </form>
+
+        <div class="menu-sec">
+          <div class="menu-sec-head">
+            <h2>💡 이런 요리는 어때요?</h2>
+            <span class="sec-n" id="suggestCount">0</span>
+          </div>
+          <p class="sec-hint">지금 냉장고 재료로 바로 되거나 1~2개만 더 있으면 되는 요리예요. 마음에 드는 요리는 ⭐ 로 내 레시피에 담아 두세요.</p>
+          <div class="card-list" id="suggestList"></div>
+        </div>
+      </div><!-- /paneCook -->
+
+      <div id="panePlan" hidden>
+        <div class="plan-bar">
+          <div class="plan-progress">
+            <span class="plan-progress-label">이번 주 식단 7일 중 <b id="planDoneN">0</b>일 완료</span>
+            <span class="plan-progress-pct" id="planDonePct">0%</span>
+          </div>
+          <div class="plan-track" id="planTrack" role="progressbar" aria-label="이번 주 식단 완료율" aria-valuemin="0" aria-valuemax="7" aria-valuenow="0">
+            <div class="plan-fill" id="planFill"></div>
+          </div>
+          <div class="plan-btns">
+            <button class="plan-auto" id="planAuto" type="button">🎲 안 겹치게 자동 식단 짜기</button>
+            <button class="plan-clear" id="planReset" type="button">체크 초기화</button>
+          </div>
+        </div>
+        <p class="plan-hint">월~일 하루 한 끼 메인 메뉴예요. 같은 메뉴는 한 번만, 연속된 요일엔 주재료가 겹치지 않게 골라 드려요.</p>
+        <div class="card-list plan-list" id="planList"></div>
+      </div>
+    </section>
+
+    <!-- ══════════ 📒 가계부 (식비) ══════════ -->
+    <section class="view" id="view-ledger" role="tabpanel" aria-labelledby="tabLedger" hidden>
+      <div class="ledger-bar">
+        <button class="lm-btn" id="lgPrev" type="button" aria-label="이전 달 보기">◀</button>
+        <div class="lm-label" id="lgMonthLabel">이번 달</div>
+        <button class="lm-btn" id="lgNext" type="button" aria-label="다음 달 보기">▶</button>
+      </div>
+
+      <div class="ledger-sum" id="lgSummary"></div>
+      <p class="lg-note" id="lgNote"></p>
+
+      <div class="chips lg-chips" id="lgCatChips" role="group" aria-label="품목군 필터"></div>
+
+      <div class="paste-import" id="lgPasteImport">
+        <button class="paste-toggle" id="lgPasteToggle" type="button" aria-expanded="false" aria-controls="lgPastePanel">
+          <span class="pi-ico" aria-hidden="true">📥</span>
+          <span class="pi-text">주문내역 붙여넣기</span>
+          <span class="pi-chev" aria-hidden="true">▼</span>
+        </button>
+        <div class="paste-panel" id="lgPastePanel" hidden>
+          <p class="paste-hint">한 줄에 <b>날짜 | 내용 | 금액</b> 또는 <b>날짜 | 품목군 | 내용 | 금액</b> 순서로 붙여넣으면 여러 건을 한 번에 기록해요. 품목군을 빼면 내용에서 자동으로 골라 넣고, 같은 날짜·내용·금액은 중복으로 넣지 않아요.</p>
+          <textarea id="lgPasteText" spellcheck="false"
+            placeholder="2026-11-14 | 채소·두부·버섯 | 새송이버섯 600g | 2580&#10;2026-11-15 | 닭다리살 외 4건 | 34200"
+            aria-label="주문 내역 붙여넣기"></textarea>
+          <label class="paste-sync" for="lgPasteFridge">
+            <input type="checkbox" id="lgPasteFridge" aria-label="냉장고 재고에도 반영" checked>
+            <span class="ps-label">냉장고 재고에도 반영</span>
+          </label>
+          <div class="paste-actions">
+            <button class="paste-submit" id="lgPasteSubmit" type="button">가계부에 기록하기</button>
+            <button class="paste-cancel" id="lgPasteCancel" type="button">닫기</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="ask-btn" id="lgAskBtn" type="button" aria-label="쿠팡 식품 주문내역 정리를 요청하는 문구 복사">🤖 쿠팡 식품 주문내역 정리 요청</button>
+
+      <div class="count-line" id="lgCount"></div>
+      <div class="card-list" id="lgList"></div>
+
+      <div class="card lg-ratio" id="lgRatioCard">
+        <div class="lg-ratio-head">
+          <h2 class="lg-ratio-title">📊 카테고리별 식비 비율</h2>
+          <span class="lg-ratio-total" id="lgRatioTotal"></span>
+        </div>
+        <div class="lg-ratio-list" id="lgRatioList"></div>
+      </div>
+
+      <form class="add-form" id="ledgerForm" autocomplete="off">
+        <div class="form-title">+ 식비 기록 추가</div>
+        <div class="row">
+          <input id="lgDate" type="date" aria-label="날짜">
+        </div>
+        <div class="row">
+          <input id="lgDesc" type="text" placeholder="내용 (예: 닭다리살 외 3건)" aria-label="내용">
+          <input id="lgAmount" class="lg-amt-input" type="text" inputmode="numeric" placeholder="금액 (원)" aria-label="금액">
+        </div>
+        <div class="row">
+          <select id="lgCat" aria-label="품목군"></select>
+        </div>
+        <button class="submit-btn" type="submit">+ 기록 추가</button>
+        <div class="add-hint">날짜를 비우면 오늘로 들어가요. 금액은 숫자만 적어도 돼요. 품목군은 내용에 맞춰 자동으로 골라 줘요.</div>
+      </form>
+    </section>
+  </main>
+</div>
+
+<!-- 자주 사는 품목 → 장바구니 CTA -->
+<div class="cta-bar" id="ctaBar" hidden>
+  <button class="cta-btn" id="toCartBtn" type="button">🛒 장바구니로 담기 (선택 0건)</button>
+</div>
+
+<!-- 장바구니 → 주문 요청 CTA -->
+<div class="cta-bar" id="cartCtaBar" hidden>
+  <button class="cta-btn" id="copyBtn" type="button">🛒 됴니에게 쿠팡 주문 요청 복사 (0건)</button>
+</div>
+
+<!-- 하단 탭 -->
+<nav class="tabbar" role="tablist" aria-label="화면 이동">
+  <button class="tab on" id="tabFridge" type="button" role="tab" aria-selected="true" aria-controls="view-fridge" data-view="fridge">
+    <span class="tab-ico" aria-hidden="true">🧊</span>
+    <span class="tab-txt">냉장고</span>
+  </button>
+  <button class="tab" id="tabShop" type="button" role="tab" aria-selected="false" aria-controls="view-shop" data-view="shop">
+    <span class="tab-ico" aria-hidden="true">⭐</span>
+    <span class="tab-txt">자주 사는</span>
+  </button>
+  <button class="tab" id="tabCart" type="button" role="tab" aria-selected="false" aria-controls="view-cart" data-view="cart">
+    <span class="tab-ico" aria-hidden="true">🛒</span>
+    <span class="tab-txt">장바구니</span>
+    <span class="badge" id="tabBadge" hidden>0</span>
+  </button>
+  <button class="tab" id="tabMenu" type="button" role="tab" aria-selected="false" aria-controls="view-menu" data-view="menu">
+    <span class="tab-ico" aria-hidden="true">🍳</span>
+    <span class="tab-txt">메뉴 추천</span>
+  </button>
+  <button class="tab" id="tabLedger" type="button" role="tab" aria-selected="false" aria-controls="view-ledger" data-view="ledger">
+    <span class="tab-ico" aria-hidden="true">📒</span>
+    <span class="tab-txt">가계부</span>
+  </button>
+</nav>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- 클립보드 폴백 모달 -->
+<div class="modal-backdrop" id="modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h2 id="modalTitle">주문 요청 문구</h2>
+    <p class="modal-sub">아래 문구를 길게 눌러 전체 선택한 뒤 복사해서 됴니에게 붙여 주세요.</p>
+    <textarea id="copyText" readonly aria-label="주문 요청 문구"></textarea>
+    <div class="modal-btns">
+      <button class="ghost" id="modalClose" type="button">닫기</button>
+      <button class="primary" id="modalCopy" type="button">복사</button>
+    </div>
+  </div>
+</div>
+
+<!-- 데이터 백업 · 복원 모달 -->
+<div class="modal-backdrop" id="backupModal" hidden>
+  <div class="modal backup-modal" role="dialog" aria-modal="true" aria-labelledby="backupTitle">
+    <h2 id="backupTitle">💾 데이터 백업 · 복원</h2>
+    <p class="modal-sub">냉장고·자주 사는 품목·장바구니·레시피·주간 식단표·가계부를 한 번에 담아요.</p>
+
+    <div class="bk-sec">
+      <div class="bk-sec-title">📤 백업하기</div>
+      <p class="bk-hint">아래 백업 코드를 복사해 두거나 파일로 저장해 두세요. 코드는 이 기기에만 보관됩니다.</p>
+      <div class="bk-btns">
+        <button class="bk-btn primary" id="backupCopy" type="button">백업 코드 복사하기</button>
+        <button class="bk-btn" id="backupFile" type="button">파일(.json)로 저장</button>
+      </div>
+      <textarea id="backupText" class="bk-text" readonly spellcheck="false" aria-label="백업 코드"></textarea>
+    </div>
+
+    <div class="bk-sec">
+      <div class="bk-sec-title">📥 복원하기</div>
+      <p class="bk-hint">백업 코드를 붙여넣거나 .json 파일을 고르면 복원할 수 있어요. 복원하면 지금 데이터가 백업 시점으로 바뀝니다.</p>
+      <textarea id="restoreText" class="bk-text" spellcheck="false" placeholder='백업 코드를 여기에 붙여넣기 (예: {&quot;app&quot;:&quot;fridge-shop&quot;,...})' aria-label="복원할 백업 코드"></textarea>
+      <div class="bk-btns">
+        <label class="bk-btn file-label" for="restoreFile">📂 .json 파일 고르기</label>
+        <input id="restoreFile" class="bk-file" type="file" accept=".json,application/json" aria-label="백업 파일 선택">
+      </div>
+      <button class="bk-btn primary wide" id="restoreBtn" type="button">붙여넣은 백업으로 복원</button>
+    </div>
+
+    <div class="modal-btns">
+      <button class="ghost" id="backupClose" type="button">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ─────────── 기본값 ─────────── */
+  /* 냉장고 재고 탭 카테고리 (4분류: 생활용품 → 소스·양념, 채소·버섯에 두부류까지 포함) */
+  const CATS = ['육류·수산·계란', '채소·두부·버섯', '소스·양념', '간편·면·음료'];
+  /* 두부류로 보는 품목명 키워드 — 자동 분류(FRIDGE_CAT_HINTS)와 저장값 1회 보정이 같은 목록을 쓴다 */
+  const TOFU_HINTS = ['두부', '순두부', '만능두부', '연두부', '부침두부', '찌개두부'];
+  /* 품목명 키워드로 냉장고 카테고리 자동 분류 (못 찾으면 간편·면·음료)
+     · 소스·양념을 채소·두부·버섯보다 먼저 보므로 '고추장'이 '고추'로 새지 않는다. */
+  const FRIDGE_CAT_HINTS = [
+    ['육류·수산·계란', [
+      '목살', '삼겹', '돼지', '소고기', '한우', '수입산', '닭다리', '닭가슴', '닭', '계란', '대란', '달걀',
+      '메추리', '새우', '오징어', '고등어', '연어', '참치', '베이컨', '소세지', '소시지', '스팸', '햄', '조개', '홍합',
+      '갈치', '삼치', '생선', '명란', '어묵', '게맛살', '장어', '전복', '낙지', '주꾸미', '문어', '불고기', '차돌',
+      '오리로스', '오리고기', '훈제오리', '닭강정', '닭볶음탕', '순살', '돈까스', '탕수육', '미트볼'
+    ]],
+    ['소스·양념', [
+      '간장', '참기름', '들기름', '식용유', '올리브유', '카놀라유', '포도씨유',
+      '고추장', '고춧가루', '고추가루', '고추기름', '된장', '쌈장', '춘장', '청국장',
+      '굴소스', '피시소스', '우스터', '돈가스소스', '스테이크소스', '소스', '양념', '드레싱',
+      '케첩', '마요네즈', '머스터드', '식초', '미림', '맛술', '청주', '맛간장', '액젓',
+      '소금', '설탕', '후추', '다시다', '치킨스톡', '매실', '올리고당', '물엿', '꿀'
+    ]],
+    ['채소·두부·버섯', TOFU_HINTS.concat([
+      '버섯', '새송이', '표고', '양송이', '팽이', '콩나물', '숙주', '마늘', '양파', '대파', '쪽파', '실파', '고추',
+      '청양', '당근', '오이', '감자', '고구마', '배추', '상추', '시금치', '깻잎', '브로콜리', '토마토', '애호박', '호박',
+      '무우', '부추', '샐러드', '채소', '야채', '대추', '생강', '레몬', '사과', '바나나', '딸기', '포도', '과일',
+      '귤', '오렌지', '블루베리', '방울토마토', '아보카도', '파프리카', '가지', '옥수수',
+      '감귤', '복숭아', '키위', '체리', '자두', '멜론', '수박', '참외', '망고', '파인애플',
+      '양배추', '청경채', '미나리', '쑥갓', '시래기', '피망', '연근', '우엉', '도라지', '더덕'
+    ])]
+  ];
+  /* 자주 사는 품목 탭 카테고리 (3분류) */
+  const SHOP_CATS = ['육류·계란·수산', '채소·과일', '기타·생필품'];
+  /* 자주 사는 품목 카테고리 저장 스키마 버전 (3분류 = 2) */
+  const SHOP_CAT_SCHEMA = 2;
+  /* 초기 기본 채소·과일 4종 — 구버전에서 '기타·생필품'으로 저장돼 있으면 1회만 보정 */
+  const SEED_VEG_NAMES = [
+    '못생겨도 맛있는 새송이버섯 600g',
+    '곰곰 찜용 콩나물 500g',
+    '국내산 깐마늘',
+    '못생겨도 맛있는 청양고추'
+  ];
+  /* 9~11월 쿠팡 주문 내역에서 반복 구매(2~3회)가 확인된 식재료 7종.
+     새 기본값에 넣는 동시에, 이미 저장값이 있는 기기에는 frequentAddedV2 플래그로 1회만 보충한다. */
+  const FREQ_SEED_V2 = [
+    ['국내산 부추 300g', '300g · 2회 구매', '채소·과일'],
+    ['국내산 애호박 1개입', '1개입 · 3회 구매', '채소·과일'],
+    ['국내산 알배기 1개입', '1개입 · 2회 구매', '채소·과일'],
+    ['국내산 양파(소) 1kg', '1kg · 2회 구매', '채소·과일'],
+    ['국내산 깐대파 500g', '500g · 2회 구매', '채소·과일'],
+    ['숙주나물 300g', '300~380g · 2회 구매', '채소·과일'],
+    ['곰곰 부드럽고 고소한 순두부 350g', '350g · 2~4개입', '기타·생필품']
+  ];
+  /* 자주 사는 품목 보충 스키마 버전 (frequentAddedV2 = 2) */
+  const FREQ_ADD_SCHEMA = 2;
+  /* 이전 버전 냉장고 카테고리명 → 현재 이름 (저장값·백업 복원 호환)
+     · '채소·버섯'은 두부류를 합친 '채소·두부·버섯'으로 이어받는다. */
+  const FRIDGE_CAT_ALIAS = {
+    '채소·버섯': '채소·두부·버섯',
+    '채소·두부': '채소·두부·버섯',
+    '두부·버섯': '채소·두부·버섯',
+    '채소·과일': '채소·두부·버섯'
+  };
+  /* 냉장고 카테고리 저장 스키마 버전 (두부류를 채소·두부·버섯으로 모은 2) */
+  const FRIDGE_CAT_SCHEMA = 2;
+  /* 이전 버전(4분류·2분류) 저장값을 새 3분류로 매핑 */
+  const SHOP_CAT_ALIAS = {
+    '육류·계란·수산': '육류·계란·수산',
+    '육류·수산·계란': '육류·계란·수산',
+    '채소·과일': '채소·과일',
+    '채소·버섯': '채소·과일',
+    '기타·생필품': '기타·생필품',
+    '간편·면·음료': '기타·생필품',
+    '소스·양념': '기타·생필품',
+    '생활용품': '기타·생필품'
+  };
+  const STORE_KEY = 'fridge-shop-v1';
+
+  /* 가계부 품목군 (3분류) — 냉장고 분류와 이름을 맞춘 큰 묶음
+     · 냉장고의 '소스·양념'과 '간편·면·음료'는 가계부에서 '소스·간편·음료' 하나로 모은다. */
+  const LEDGER_CATS = ['육류·수산·계란', '채소·두부·버섯', '소스·간편·음료'];
+  const LEDGER_CAT_FALLBACK = '소스·간편·음료';
+  /* 다른 표기로 들어온 품목군을 3분류로 맞춘다 (붙여넣기·저장값·백업 호환) */
+  const LEDGER_CAT_ALIAS = {
+    '육류·수산·계란': '육류·수산·계란',
+    '육류·계란·수산': '육류·수산·계란',
+    '육류': '육류·수산·계란',
+    '수산': '육류·수산·계란',
+    '계란': '육류·수산·계란',
+    '고기': '육류·수산·계란',
+    '채소·두부·버섯': '채소·두부·버섯',
+    '채소·버섯': '채소·두부·버섯',
+    '채소·과일': '채소·두부·버섯',
+    '채소': '채소·두부·버섯',
+    '두부': '채소·두부·버섯',
+    '버섯': '채소·두부·버섯',
+    '과일': '채소·두부·버섯',
+    '소스·간편·음료': '소스·간편·음료',
+    '소스·양념': '소스·간편·음료',
+    '간편·면·음료': '소스·간편·음료',
+    '소스': '소스·간편·음료',
+    '양념': '소스·간편·음료',
+    '간편': '소스·간편·음료',
+    '음료': '소스·간편·음료',
+    '기타': '소스·간편·음료',
+    '기타·생필품': '소스·간편·음료',
+    '생필품': '소스·간편·음료'
+  };
+
+  const uid = (p) => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+  function defaultFridge() {
+    const rows = [
+      ['미국산 목살 구이용 (냉장)', '1kg · 구이용', '육류·수산·계란'],
+      ['곰곰 닭다리살 정육 (냉장)', '600g · 찜닭·볶음', '육류·수산·계란'],
+      ['프라이드 흰다리 새우살 (냉동)', '900g · 감바스·볶음', '육류·수산·계란'],
+      ['신선한 대란 30구', '계란 30구', '육류·수산·계란'],
+      ['못생겨도 맛있는 새송이버섯 600g', '600g · 구이·볶음', '채소·두부·버섯'],
+      ['곰곰 찜용 콩나물 500g', '500g · 국·찜', '채소·두부·버섯'],
+      ['국내산 깐마늘', '깐마늘 · 양념', '채소·두부·버섯'],
+      ['못생겨도 맛있는 청양고추', '청양고추 · 양념', '채소·두부·버섯'],
+      ['진간장', '1병 · 간장', '소스·양념'],
+      ['참기름', '1병 · 참기름', '소스·양념'],
+      ['굴소스', '1병 · 굴소스', '소스·양념'],
+      ['동원 유부 180g', '180g · 우동·초밥', '간편·면·음료'],
+      ['면사랑 사누끼 우동면', '우동면 · 1인분', '간편·면·음료'],
+      ['탐사 샘물 2L 12개', '2L × 12 · 물', '간편·면·음료']
+    ];
+    return rows.map(r => ({ id: uid('f'), name: r[0], memo: r[1], cat: r[2], inStock: true }));
+  }
+
+  function defaultList() {
+    const rows = [
+      ['미국산 목살 구이용 (냉장)', '1kg · 구이용', '육류·계란·수산'],
+      ['곰곰 닭다리살 정육 (냉장)', '600g · 찜닭·볶음', '육류·계란·수산'],
+      ['프라이드 흰다리 새우살 (냉동)', '900g · 감바스·볶음', '육류·계란·수산'],
+      ['신선한 대란 30구', '계란 30구', '육류·계란·수산'],
+      ['못생겨도 맛있는 새송이버섯 600g', '600g · 구이·볶음', '채소·과일'],
+      ['곰곰 찜용 콩나물 500g', '500g · 국·찜', '채소·과일'],
+      ['국내산 깐마늘', '깐마늘 · 양념', '채소·과일'],
+      ['못생겨도 맛있는 청양고추', '청양고추 · 양념', '채소·과일'],
+      ['국내산 부추 300g', '300g · 2회 구매', '채소·과일'],
+      ['국내산 애호박 1개입', '1개입 · 3회 구매', '채소·과일'],
+      ['국내산 알배기 1개입', '1개입 · 2회 구매', '채소·과일'],
+      ['국내산 양파(소) 1kg', '1kg · 2회 구매', '채소·과일'],
+      ['국내산 깐대파 500g', '500g · 2회 구매', '채소·과일'],
+      ['숙주나물 300g', '300~380g · 2회 구매', '채소·과일'],
+      ['동원 유부 180g', '180g · 우동·초밥', '기타·생필품'],
+      ['면사랑 사누끼 우동면', '우동면 · 1인분', '기타·생필품'],
+      ['곰곰 부드럽고 고소한 순두부 350g', '350g · 2~4개입', '기타·생필품'],
+      ['탐사 샘물 2L 12개', '2L × 12 · 물', '기타·생필품'],
+      ['[24시간숙성] 타브론 시트 섬유유연제 비누향 120매', '120매 · 섬유유연제', '기타·생필품'],
+      ['[일진] 아리미노 하나 트리트먼트 1L', '1L · 트리트먼트', '기타·생필품'],
+      ['허브데이 팬티라이너 소형 20개입 4개', '소형 20개입 × 4', '기타·생필품'],
+      ['XPERT 어금니 틈새용 칫솔 4개입', '4개입 · 칫솔', '기타·생필품']
+    ];
+    return rows.map(r => ({
+      id: uid('l'), name: r[0], memo: r[1], cat: r[2],
+      url: '', fav: false, qty: 1, checked: false
+    }));
+  }
+
+  /* 기본 레시피 — 지원님이 실제로 해 먹던 요리 이력 */
+  function defaultRecipes() {
+    const rows = [
+      ['이북식 찜닭', ['닭다리살', '깐마늘', '청양고추'], '간장·참기름 양념해 40분 찌기'],
+      ['지도리우동', ['닭다리살', '우동면', '청양고추', '깐마늘'], '얼큰하고 진한 국물 우동'],
+      ['새우 볶음 / 감바스', ['새우살', '깐마늘', '청양고추'], '마늘·청양고추 듬뿍'],
+      ['계란 콩나물국', ['콩나물', '대란', '깐마늘'], '시원한 해장/아침 국']
+    ];
+    return rows.map(r => ({ id: uid('r'), name: r[0], items: r[1].slice(), memo: r[2] }));
+  }
+
+  function freshState() {
+    return {
+      fridge: defaultFridge(), list: defaultList(), cart: [], recipes: defaultRecipes(),
+      weeklyPlan: [], ledger: [],
+      tab: 'fridge', favFirst: false, catVersion: SHOP_CAT_SCHEMA,
+      frequentAddedV2: FREQ_ADD_SCHEMA, fridgeCatVersion: FRIDGE_CAT_SCHEMA
+    };
+  }
+
+  /* ─────────── 상태 저장 ─────────── */
+  let state;
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return freshState();
+      return stateFromParsed(JSON.parse(raw)) || freshState();
+    } catch (e) {
+      return freshState();
+    }
+  }
+
+  /* 저장값·백업 데이터를 앱 상태로 정규화 (기존 필드 마이그레이션 포함)
+     - 예전 저장값에 없는 항목은 기본값으로 채움
+     - 자주 사는 품목은 'list' / 'shop' 두 이름 모두 허용 (백업 파일 호환) */
+  function stateFromParsed(p) {
+    if (!p || typeof p !== 'object' || Array.isArray(p)) return null;
+    if (!Array.isArray(p.fridge)) return null;
+    const listSrc = Array.isArray(p.list) ? p.list : (Array.isArray(p.shop) ? p.shop : null);
+    if (!listSrc) return null;
+    const ver = parseInt(p.catVersion, 10);
+    const fromVersion = isNaN(ver) ? 1 : ver;   /* 플래그 없는 구버전 저장값 = 1 */
+    const list = listSrc.map(normList).filter(Boolean);
+    migrateShopCats(list, fromVersion);
+    /* 반복 구매 식재료 7종 1회 보충 (이미 직접 넣었거나, 보충 후 지운 경우는 플래그로 보호) */
+    if (!freqAddDone(p)) supplementFrequent(list);
+    const fridge = p.fridge.map(normFridge).filter(Boolean);
+    /* 두부류가 '간편·면·음료'에 묶여 있던 구버전 저장값은 1회만 '채소·두부·버섯'으로 보정 */
+    const fver = parseInt(p.fridgeCatVersion, 10);
+    migrateFridgeCats(fridge, isNaN(fver) ? 1 : fver);
+    return {
+      fridge: fridge,
+      list: list,
+      cart: Array.isArray(p.cart) ? p.cart.map(normCart).filter(Boolean) : [],
+      recipes: Array.isArray(p.recipes) ? p.recipes.map(normRecipe).filter(Boolean) : defaultRecipes(),
+      weeklyPlan: normWeeklyPlan(p.weeklyPlan),
+      ledger: Array.isArray(p.ledger) ? p.ledger.map(normLedger).filter(Boolean) : [],
+      tab: (p.tab === 'shop' || p.tab === 'cart' || p.tab === 'menu' || p.tab === 'ledger') ? p.tab : 'fridge',
+      favFirst: !!p.favFirst,
+      catVersion: SHOP_CAT_SCHEMA,
+      frequentAddedV2: FREQ_ADD_SCHEMA,
+      fridgeCatVersion: FRIDGE_CAT_SCHEMA
+    };
+  }
+
+  function normFridge(o) {
+    if (!o || typeof o.name !== 'string') return null;
+    return {
+      id: typeof o.id === 'string' ? o.id : uid('f'),
+      name: o.name,
+      memo: typeof o.memo === 'string' ? o.memo : '',
+      cat: normFridgeCat(o.cat, o.name),
+      inStock: o.inStock !== false
+    };
+  }
+
+  /* 저장값의 냉장고 카테고리 보정.
+     이전 버전의 '생활용품'(이제 없는 분류)이나 알 수 없는 값은 버리지 않고,
+     품목명 키워드로 다시 골라 준다. (예: '굴소스' → 소스·양념, '섬유유연제' → 간편·면·음료)
+     '채소·버섯' 같은 예전 카테고리명은 FRIDGE_CAT_ALIAS로 현재 이름에 이어 준다. */
+  function normFridgeCat(c, name) {
+    const k = String(c == null ? '' : c).trim();
+    if (CATS.indexOf(k) >= 0) return k;
+    if (FRIDGE_CAT_ALIAS[k]) return FRIDGE_CAT_ALIAS[k];
+    return guessFridgeCat(name);
+  }
+
+  /* 품목명이 두부류인지 (TOFU_HINTS 기준) */
+  function isTofuName(name) {
+    const s = String(name == null ? '' : name).replace(/\s+/g, '');
+    for (let i = 0; i < TOFU_HINTS.length; i++) {
+      if (s.indexOf(TOFU_HINTS[i]) >= 0) return true;
+    }
+    return false;
+  }
+
+  /* 두부류가 '간편·면·음료'로 저장돼 있던 구버전 값 보정 (1회).
+     fridgeCatVersion 이 이미 2 이상이면(사용자가 직접 고른 분류) 건드리지 않는다. */
+  function migrateFridgeCats(fridge, fromVersion) {
+    if (fromVersion >= FRIDGE_CAT_SCHEMA) return fridge;
+    fridge.forEach(it => {
+      if (it.cat === '간편·면·음료' && isTofuName(it.name)) it.cat = '채소·두부·버섯';
+    });
+    return fridge;
+  }
+
+  function normList(o) {
+    if (!o || typeof o.name !== 'string') return null;
+    const q = parseInt(o.qty, 10);
+    return {
+      id: typeof o.id === 'string' ? o.id : uid('l'),
+      name: o.name,
+      memo: typeof o.memo === 'string' ? o.memo : '',
+      cat: normShopCat(o.cat),
+      url: typeof o.url === 'string' ? o.url : '',
+      fav: !!o.fav,
+      qty: (isNaN(q) || q < 1) ? 1 : Math.min(q, 99),
+      checked: !!o.checked
+    };
+  }
+
+  /* 이전 버전 저장값을 새 3분류로 자연스럽게 매핑 */
+  function normShopCat(c) {
+    const k = String(c == null ? '' : c).trim();
+    return SHOP_CAT_ALIAS[k] || '기타·생필품';
+  }
+
+  /* 장바구니 품목 (이전 저장값에는 없음 → 추가 호환) */
+  function normCart(o) {
+    if (!o || typeof o.name !== 'string') return null;
+    const q = parseInt(o.qty, 10);
+    return {
+      id: typeof o.id === 'string' ? o.id : uid('c'),
+      name: o.name,
+      memo: typeof o.memo === 'string' ? o.memo : '',
+      url: typeof o.url === 'string' ? o.url : '',
+      qty: (isNaN(q) || q < 1) ? 1 : Math.min(q, 99)
+    };
+  }
+
+  /* 레시피 (이전 저장값에는 없음 → 기본 레시피로 채움) */
+  function normRecipe(o) {
+    if (!o || typeof o.name !== 'string') return null;
+    let raw = [];
+    if (Array.isArray(o.items)) raw = o.items;
+    else if (typeof o.items === 'string') raw = parseIngredientText(o.items);
+    return {
+      id: typeof o.id === 'string' ? o.id : uid('r'),
+      name: o.name,
+      items: uniqItems(raw.map(x => String(x == null ? '' : x).trim()).filter(Boolean)),
+      memo: typeof o.memo === 'string' ? o.memo : ''
+    };
+  }
+
+  function uniqItems(arr) {
+    const out = [];
+    arr.forEach(x => { if (out.indexOf(x) < 0) out.push(x); });
+    return out;
+  }
+
+  /* 주간 식단표 항목 (이전 저장값에는 없음 → 빈 배열) */
+  function normPlanEntry(o) {
+    if (!o || typeof o.name !== 'string' || !o.name.trim()) return null;
+    let raw = [];
+    if (Array.isArray(o.items)) raw = o.items;
+    else if (typeof o.items === 'string') raw = parseIngredientText(o.items);
+    return {
+      name: o.name.trim(),
+      items: uniqItems(raw.map(x => String(x == null ? '' : x).trim()).filter(Boolean)),
+      done: !!o.done
+    };
+  }
+
+  /* 7일이 온전히 저장된 경우에만 사용 (아니면 탭을 열 때 새로 편성) */
+  function normWeeklyPlan(arr) {
+    if (!Array.isArray(arr) || arr.length !== 7) return [];
+    const out = arr.map(normPlanEntry);
+    for (let i = 0; i < out.length; i++) { if (!out[i]) return []; }
+    return out;
+  }
+
+  /* 가계부 항목 (이전 저장값에는 없음 → 빈 배열)
+     식비 중심이라 지출처·카테고리는 두지 않고 날짜·내용·금액만 보관한다. */
+  function normLedger(o) {
+    if (!o || typeof o !== 'object') return null;
+    const d = parseISODate(o.date);
+    const amt = parseAmountText(o.amount);
+    if (!d || !(amt > 0)) return null;
+    const desc = String(o.desc == null ? '' : o.desc).trim().slice(0, 60) || '지출';
+    return {
+      id: typeof o.id === 'string' ? o.id : uid('g'),
+      date: ymd(d),
+      desc: desc,
+      amount: amt,
+      cat: normLedgerCat(o.cat, desc)
+    };
+  }
+
+  /* 가계부 품목군 보정: 3분류 밖의 값이나 예전 표기는 가까운 묶음으로,
+     품목군이 아예 없는 예전 기록은 내용 키워드로 추정한다. (없으면 소스·간편·음료) */
+  function normLedgerCat(c, desc) {
+    const k = String(c == null ? '' : c).replace(/\s+/g, '');
+    if (k) {
+      const hit = LEDGER_CAT_ALIAS[k];
+      if (hit) return hit;
+    }
+    return guessLedgerCat(desc);
+  }
+
+  /* 품목명 키워드로 가계부 품목군 추정 — 냉장고 사전(FRIDGE_CAT_HINTS)을 그대로 쓰고,
+     소스·양념과 간편·면·음료는 '소스·간편·음료' 한 묶음으로 본다. */
+  function guessLedgerCat(name) {
+    const c = guessFridgeCat(name);
+    if (c === '육류·수산·계란' || c === '채소·두부·버섯') return c;
+    return LEDGER_CAT_FALLBACK;
+  }
+
+  /* 붙여넣기 「날짜 | 품목군 | 내용 | 금액」의 둘째 칸이 품목군인지 (아니면 '') */
+  function ledgerCatToken(tok) {
+    const t = String(tok == null ? '' : tok).replace(/\s+/g, '').trim();
+    return t ? (LEDGER_CAT_ALIAS[t] || '') : '';
+  }
+
+  /* '닭다리살, 깐마늘, 대파' → ['닭다리살','깐마늘','대파'] */
+  function parseIngredientText(text) {
+    return uniqItems(String(text == null ? '' : text)
+      .split(/[,，、\/·]+/)
+      .map(s => s.trim())
+      .filter(Boolean));
+  }
+
+  /* 3분류 이전 저장값 보정: 옛 채소 품목이 '기타·생필품'에 묶여 있으면 '채소·과일'로.
+     catVersion 이 이미 2 이상이면(사용자가 직접 고른 값) 건드리지 않는다. */
+  function migrateShopCats(list, fromVersion) {
+    if (fromVersion >= SHOP_CAT_SCHEMA) return list;
+    list.forEach(it => {
+      if (it.cat === '기타·생필품' && SEED_VEG_NAMES.indexOf(it.name) >= 0) {
+        it.cat = '채소·과일';
+      }
+    });
+    return list;
+  }
+
+  /* 품목명 비교용 키 — 공백 제거 + 소문자 (중복 체크용) */
+  function nameKey(name) {
+    return String(name == null ? '' : name).replace(/\s+/g, '').toLowerCase();
+  }
+
+  /* 품목명 키워드로 냉장고 카테고리 자동 분류 (사전은 상단 FRIDGE_CAT_HINTS)
+     못 찾으면 '간편·면·음료'. 가계부·장바구니·추가 폼·저장값 보정이 모두 이 함수를 쓴다. */
+  function guessFridgeCat(name) {
+    const s = String(name == null ? '' : name).replace(/\s+/g, '');
+    for (let i = 0; i < FRIDGE_CAT_HINTS.length; i++) {
+      const cat = FRIDGE_CAT_HINTS[i][0], words = FRIDGE_CAT_HINTS[i][1];
+      for (let j = 0; j < words.length; j++) {
+        if (s.indexOf(words[j]) >= 0) return cat;
+      }
+    }
+    return '간편·면·음료';
+  }
+
+  /* 저장값에 반복 구매 보충 플래그가 이미 있는지
+     (true/1/2/'2'/'true' 처럼 값 형태가 달라도 '이미 보충됨'으로 보고, null·false·0·빈 값만 미보충) */
+  function freqAddDone(p) {
+    const v = p ? p.frequentAddedV2 : null;
+    if (v === undefined || v === null) return false;
+    if (v === false || v === 0 || v === '0' || v === '') return false;
+    return true;
+  }
+
+  /* FREQ_SEED_V2 중 아직 목록에 없는 품목만, 같은 카테고리 묶음 끝에 끼워 넣는다.
+     (기본값과 같은 순서감을 유지하려고 맨 뒤가 아니라 그 분류 뒤에 넣는다)
+     반환값: 추가한 개수 */
+  function supplementFrequent(list) {
+    const have = Object.create(null);
+    list.forEach(it => { have[nameKey(it.name)] = true; });
+    let added = 0;
+    FREQ_SEED_V2.forEach(r => {
+      const k = nameKey(r[0]);
+      if (have[k]) return;
+      const item = { id: uid('l'), name: r[0], memo: r[1], cat: r[2], url: '', fav: false, qty: 1, checked: false };
+      let at = -1;
+      for (let i = list.length - 1; i >= 0; i--) {
+        if (list[i].cat === item.cat) { at = i; break; }
+      }
+      if (at < 0) list.push(item); else list.splice(at + 1, 0, item);
+      have[k] = true;
+      added++;
+    });
+    return added;
+  }
+
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* 저장 불가 환경 무시 */ }
+  }
+
+  /* ─────────── DOM ─────────── */
+  const $ = (id) => document.getElementById(id);
+  const elFridge = $('view-fridge'), elShop = $('view-shop');
+  const elSummary = $('fridgeSummary'), elChips = $('fridgeChips'), elFridgeList = $('fridgeList');
+  const elFridgeCount = $('fridgeCount'), elSearch = $('fridgeSearch'), elSearchBox = $('searchBox');
+  const elShopList = $('shopList'), elShopSel = $('shopSel'), elSortBtn = $('sortBtn');
+  const elShopChips = $('shopChips');
+  const elCart = $('view-cart'), elCartList = $('cartList'), elCartTotal = $('cartTotal');
+  const elMenu = $('view-menu'), elMenuList = $('menuList'), elSuggestList = $('suggestList');
+  const elMenuChips = $('menuChips'), elMenuSummary = $('menuSummary');
+  const elMenuMyCount = $('menuMyCount'), elSuggestCount = $('suggestCount'), elAskMenuBtn = $('askMenuBtn');
+  const elPaneCook = $('paneCook'), elPanePlan = $('panePlan');
+  const elLedger = $('view-ledger'), elLgList = $('lgList'), elLgSummary = $('lgSummary');
+  const elLgMonthLabel = $('lgMonthLabel'), elLgNote = $('lgNote'), elLgCount = $('lgCount');
+  const elLgChips = $('lgCatChips'), elLgCat = $('lgCat');
+  const elLgRatioTotal = $('lgRatioTotal'), elLgRatioList = $('lgRatioList');
+  const elLgPrev = $('lgPrev'), elLgNext = $('lgNext');
+  const elLgDate = $('lgDate'), elLgAmount = $('lgAmount'), elLgDesc = $('lgDesc');
+  const elLgPasteWrap = $('lgPasteImport'), elLgPasteToggle = $('lgPasteToggle');
+  const elLgPastePanel = $('lgPastePanel'), elLgPasteText = $('lgPasteText');
+  const elLgPasteFridge = $('lgPasteFridge');   /* ☑ 냉장고 재고에도 반영 */
+  const elPlanList = $('planList'), elPlanDoneN = $('planDoneN'), elPlanDonePct = $('planDonePct');
+  const elPlanFill = $('planFill'), elPlanTrack = $('planTrack');
+  const elPlanAuto = $('planAuto'), elPlanReset = $('planReset');
+  const elBackupModal = $('backupModal'), elBackupText = $('backupText'), elRestoreText = $('restoreText');
+  const elCtaBar = $('ctaBar'), elToCartBtn = $('toCartBtn'), elCartCtaBar = $('cartCtaBar');
+  const elCopyBtn = $('copyBtn'), elBadge = $('tabBadge');
+  const elHeadIcon = $('headIcon'), elHeadTitle = $('headTitle');
+  const elToast = $('toast'), elModal = $('modal'), elCopyText = $('copyText');
+  const elModalTitle = $('modalTitle');
+  const elFridgeCat = $('fridgeCat'), elShopCat = $('shopCat');
+
+  let activeCat = '전체';
+  let activeShopCat = '전체';
+  let activeMenuFilter = 'all';
+  let menuPane = 'cook';        // 메뉴 추천 하위 탭: 'cook' 요리 추천 / 'plan' 주간 식단표
+  let editingPlanDay = -1;      // 메뉴명 인라인 수정 중인 요일 (0=월 ~ 6=일)
+  let planRotate = 0;           // 바꾸기 순환 위치
+  let query = '';
+  let editingId = null;       // 링크 편집 중인 품목 id
+  let editingItemId = null;   // 품목명·메모·카테고리 편집 중인 품목 id(자주 사는 품목)
+  let editingFridgeId = null; // 품목명·카테고리·메모 편집 중인 품목 id(냉장고 재고)
+  let editingRecipeId = null; // 레시피 편집 중인 id
+  let ledgerYM = null;        // 가계부에서 보고 있는 달 { y, m }
+  let ledgerCatFilter = '전체'; // 가계부 품목군 필터
+  let editingLedgerId = null; // 가계부 지출 내역 인라인 수정 중인 기록 id
+  let lgCatTouched = false;   // 품목군을 손으로 고른 뒤에는 내용으로 자동 변경하지 않음
+  let lastDeleted = null;
+
+  const esc = (s) => String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+  /* ─────────── 토스트 ─────────── */
+  let toastTimer = null;
+  function hideToast() {
+    elToast.classList.remove('show');
+    elToast.innerHTML = '';
+  }
+  function showToast(msg, undoFn) {
+    clearTimeout(toastTimer);
+    elToast.innerHTML = '';
+    const span = document.createElement('span');
+    span.textContent = msg;
+    elToast.appendChild(span);
+    if (undoFn) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'toast-undo';
+      b.textContent = '되돌리기';
+      b.addEventListener('click', () => { undoFn(); hideToast(); });
+      elToast.appendChild(b);
+    }
+    elToast.classList.add('show');
+    toastTimer = setTimeout(hideToast, undoFn ? 6000 : 2300);
+  }
+
+  /* ─────────── 카테고리 select 채우기 ─────────── */
+  function fillCats(sel, cats, preset) {
+    const list = Array.isArray(cats) && cats.length ? cats : CATS;
+    sel.innerHTML = list.map(c => '<option value="' + esc(c) + '">' + esc(c) + '</option>').join('');
+    if (preset && list.indexOf(preset) >= 0) sel.value = preset;
+  }
+  fillCats(elFridgeCat);
+  fillCats(elShopCat, SHOP_CATS, '기타·생필품');
+  fillCats(elLgCat, LEDGER_CATS, LEDGER_CATS[0]);
+
+  function catOptions(sel, cats) {
+    const list = Array.isArray(cats) && cats.length ? cats : SHOP_CATS;
+    return list.map(c =>
+      '<option value="' + esc(c) + '"' + (c === sel ? ' selected' : '') + '>' + esc(c) + '</option>'
+    ).join('');
+  }
+
+  /* ─────────── 냉장고 탭 ─────────── */
+  function fridgeFiltered() {
+    const q = query.trim().toLowerCase();
+    return state.fridge.filter(it => {
+      if (activeCat !== '전체' && it.cat !== activeCat) return false;
+      if (!q) return true;
+      return (it.name + ' ' + it.memo + ' ' + it.cat).toLowerCase().indexOf(q) >= 0;
+    });
+  }
+
+  function renderSummary() {
+    const total = state.fridge.length;
+    const inS = state.fridge.filter(i => i.inStock).length;
+    const outS = total - inS;
+    elSummary.innerHTML =
+      '<div class="sum-item"><div class="sum-label">전체 품목</div><div class="sum-value">' + total + '<span class="unit">개</span></div></div>' +
+      '<div class="sum-item"><div class="sum-label">보유</div><div class="sum-value">' + inS + '<span class="unit">개</span></div></div>' +
+      '<div class="sum-item"><div class="sum-label">소진</div><div class="sum-value">' + outS + '<span class="unit">개</span></div></div>';
+  }
+
+  function renderChips() {
+    /* 냉장고 카테고리 칩은 이름만 표시(개수 숫자 없음) — ⭐ 자주 사는 품목 칩과 같은 방식 */
+    const all = ['전체'].concat(CATS);
+    elChips.innerHTML = all.map(c =>
+      '<button type="button" class="chip' + (activeCat === c ? ' on' : '') + '" data-cat="' + esc(c) + '" aria-pressed="' + (activeCat === c) + '">' +
+      esc(c) + '</button>'
+    ).join('');
+  }
+
+  function renderFridge() {
+    renderSummary();
+    renderChips();
+
+    const rows = fridgeFiltered();
+    /* 편집 중인 품목이 검색·필터에서 빠졌으면 편집 상태도 정리 */
+    if (editingFridgeId && !rows.some(it => it.id === editingFridgeId)) editingFridgeId = null;
+    const inS = rows.filter(i => i.inStock).length;
+    elFridgeCount.innerHTML = '전체 <b>' + rows.length + '</b>개 · 보유 <b>' + inS + '</b> · 소진 <b>' + (rows.length - inS) + '</b>';
+
+    if (!rows.length) {
+      elFridgeList.innerHTML = '<div class="empty">' + (state.fridge.length ? '조건에 맞는 품목이 없어요.' : '냉장고가 비어 있어요. 아래에서 품목을 추가해 보세요.') + '</div>';
+      return;
+    }
+
+    elFridgeList.innerHTML = rows.map(it => {
+      /* ── 품목 정보 인라인 수정 모드 ── */
+      if (editingFridgeId === it.id) {
+        return '<div class="card item-card is-editing' + (it.inStock ? '' : ' is-out') + '" data-id="' + esc(it.id) + '">' +
+          '<div class="item-main">' +
+            '<div class="item-editor">' +
+              '<div class="edit-row">' +
+                '<span class="edit-label">품목명</span>' +
+                '<input class="edit-name" type="text" value="' + esc(it.name) + '" placeholder="품목명" aria-label="품목명">' +
+              '</div>' +
+              '<div class="edit-row">' +
+                '<span class="edit-label">카테고리</span>' +
+                '<select class="edit-cat" aria-label="카테고리">' + catOptions(it.cat, CATS) + '</select>' +
+              '</div>' +
+              '<div class="edit-row">' +
+                '<span class="edit-label">메모</span>' +
+                '<input class="edit-memo" type="text" value="' + esc(it.memo) + '" placeholder="메모 (예: 1팩, 찌개용)" aria-label="메모">' +
+              '</div>' +
+              '<div class="edit-actions">' +
+                '<button type="button" class="save" data-action="edit-save">저장</button>' +
+                '<button type="button" class="cancel" data-action="edit-cancel">취소</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }
+
+      return '<div class="card item-card' + (it.inStock ? '' : ' is-out') + '" data-id="' + esc(it.id) + '">' +
+        '<div class="item-main">' +
+          '<div class="item-name">' + esc(it.name) + '</div>' +
+          '<div class="item-meta">' + esc(it.memo || it.cat) + (it.memo ? ' · ' + esc(it.cat) : '') + '</div>' +
+        '</div>' +
+        '<button type="button" class="state-btn' + (it.inStock ? '' : ' out') + '" data-action="toggle" aria-pressed="' + it.inStock + '" aria-label="' + esc(it.name) + ' 상태 바꾸기">' + (it.inStock ? '보유' : '소진') + '</button>' +
+        '<button type="button" class="edit-btn" data-action="edit" aria-label="' + esc(it.name) + ' 품목명·카테고리·메모 수정">✎</button>' +
+        '<button type="button" class="del-btn" data-action="del" aria-label="' + esc(it.name) + ' 삭제">×</button>' +
+      '</div>';
+    }).join('');
+  }
+
+  /* ─────────── 장보기 탭 ─────────── */
+  function shopFiltered() {
+    const arr = state.list.filter(i => activeShopCat === '전체' || i.cat === activeShopCat);
+    if (state.favFirst) {
+      arr.sort((a, b) => (b.fav ? 1 : 0) - (a.fav ? 1 : 0));
+    }
+    return arr;
+  }
+
+  function renderShopChips() {
+    /* 자주 사는 품목 카테고리 칩은 이름만 표시(개수 숫자 없음) */
+    const all = ['전체'].concat(SHOP_CATS);
+    elShopChips.innerHTML = all.map(c =>
+      '<button type="button" class="chip' + (activeShopCat === c ? ' on' : '') + '" data-scat="' + esc(c) + '" aria-pressed="' + (activeShopCat === c) + '">' +
+      esc(c) + '</button>'
+    ).join('');
+  }
+
+  function searchUrl(name) {
+    const clean = String(name).replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();
+    return 'https://www.coupang.com/np/search?q=' + encodeURIComponent(clean);
+  }
+
+  function hostOf(url) {
+    try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return ''; }
+  }
+
+  function renderShop() {
+    renderShopChips();
+
+    const arr = shopFiltered();
+    const picked = state.list.filter(i => i.checked).length;
+
+    elShopSel.innerHTML = '담은 품목 <b>' + state.list.length + '</b>개 · 장바구니로 <b>' + picked + '</b>건 선택';
+    elSortBtn.textContent = state.favFirst ? '정렬: 즐겨찾기 먼저' : '정렬: 등록순';
+    elSortBtn.classList.toggle('on', state.favFirst);
+
+    if (!arr.length) {
+      elShopList.innerHTML = '<div class="empty">' +
+        (state.list.length ? '이 카테고리에 담긴 품목이 없어요.' : '자주 사는 품목이 없어요. 아래에서 추가해 보세요.') +
+        '</div>';
+      return;
+    }
+
+    elShopList.innerHTML = arr.map(it => {
+      const favHtml =
+        '<button type="button" class="fav' + (it.fav ? ' on' : '') + '" data-action="fav" aria-pressed="' + it.fav + '" aria-label="' + esc(it.name) + ' 즐겨찾기">' + (it.fav ? '★' : '☆') + '</button>';
+      const checkHtml =
+        '<button type="button" class="check' + (it.checked ? ' on' : '') + '" data-action="check" role="checkbox" aria-checked="' + it.checked + '" aria-label="' + esc(it.name) + ' 이번 주문 선택">' + (it.checked ? '✓' : '') + '</button>';
+
+      /* ── 품목 정보 인라인 수정 모드 ── */
+      if (editingItemId === it.id) {
+        return '<div class="card shop-card is-editing" data-id="' + esc(it.id) + '">' +
+          favHtml + checkHtml +
+          '<div class="shop-main">' +
+            '<div class="item-editor">' +
+              '<div class="edit-row">' +
+                '<span class="edit-label">품목명</span>' +
+                '<input class="edit-name" type="text" value="' + esc(it.name) + '" placeholder="품목명" aria-label="품목명">' +
+              '</div>' +
+              '<div class="edit-row">' +
+                '<span class="edit-label">메모</span>' +
+                '<input class="edit-memo" type="text" value="' + esc(it.memo) + '" placeholder="규격·메모 (예: 2L × 12)" aria-label="메모·규격">' +
+              '</div>' +
+              '<div class="edit-row">' +
+                '<span class="edit-label">카테고리</span>' +
+                '<select class="edit-cat" aria-label="카테고리">' + catOptions(it.cat) + '</select>' +
+              '</div>' +
+              '<div class="edit-actions">' +
+                '<button type="button" class="save" data-action="edit-save">저장</button>' +
+                '<button type="button" class="cancel" data-action="edit-cancel">취소</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }
+
+      const isCoupang = it.url && /(^|\.)coupang\.com$/i.test(hostOf(it.url));
+      const linkLabel = isCoupang ? '쿠팡 보기 ↗' : '링크 열기 ↗';
+      const linkHtml = it.url
+        ? '<a class="link-btn" href="' + esc(it.url) + '" target="_blank" rel="noopener noreferrer">' + linkLabel + '</a>'
+        : '<a class="link-btn no-link" href="' + esc(searchUrl(it.name)) + '" target="_blank" rel="noopener noreferrer">쿠팡 검색 ↗</a>';
+      const editor = (editingId === it.id)
+        ? '<div class="link-editor">' +
+            '<input type="text" inputmode="url" class="url-input" placeholder="https://... 쿠팡 상품 주소" value="' + esc(it.url) + '" aria-label="쿠팡 링크 주소">' +
+            '<button type="button" class="save" data-action="link-save">저장</button>' +
+            '<button type="button" class="cancel" data-action="link-cancel">취소</button>' +
+          '</div>'
+        : '';
+
+      return '<div class="card shop-card' + (it.checked ? ' is-checked' : '') + '" data-id="' + esc(it.id) + '">' +
+        favHtml + checkHtml +
+        '<div class="shop-main">' +
+          '<div class="item-name">' + esc(it.name) + '</div>' +
+          '<div class="item-meta">' + esc(it.memo || it.cat) + (it.memo ? ' · ' + esc(it.cat) : '') + '</div>' +
+          '<div class="shop-tools">' +
+            '<div class="qty">' +
+              '<button type="button" data-action="qty-minus" aria-label="수량 줄이기">−</button>' +
+              '<span aria-label="수량">' + it.qty + '</span>' +
+              '<button type="button" data-action="qty-plus" aria-label="수량 늘리기">+</button>' +
+            '</div>' +
+            linkHtml +
+          '</div>' +
+          '<div class="shop-tools tools-edit">' +
+            '<button type="button" class="mini-btn fridge-btn" data-action="to-fridge" aria-label="' + esc(it.name) + ' 내 냉장고로 보내기">🧊 냉장고로</button>' +
+            '<button type="button" class="mini-btn" data-action="link-edit">' + (it.url ? '링크 수정' : '링크 등록') + '</button>' +
+            '<button type="button" class="mini-btn edit-trigger" data-action="item-edit" aria-label="' + esc(it.name) + ' 품목명·메모·카테고리 수정">✎ 품목 수정</button>' +
+          '</div>' +
+          editor +
+        '</div>' +
+        '<button type="button" class="del-btn" data-action="del" aria-label="' + esc(it.name) + ' 삭제">×</button>' +
+      '</div>';
+    }).join('');
+  }
+
+  /* 품목 정보 저장 */
+  function saveItemEdit(card, it) {
+    const nameInp = card.querySelector('.edit-name');
+    const memoInp = card.querySelector('.edit-memo');
+    const catSel = card.querySelector('.edit-cat');
+    const name = nameInp ? nameInp.value.trim() : '';
+    if (!name) {
+      showToast('품목명을 비울 수 없어요.');
+      if (nameInp) nameInp.focus();
+      return;
+    }
+    it.name = name;
+    it.memo = memoInp ? memoInp.value.trim() : it.memo;
+    if (catSel && SHOP_CATS.indexOf(catSel.value) >= 0) it.cat = catSel.value;
+    editingItemId = null;
+    editingId = null;
+    save();
+    renderShop();
+    showToast('수정한 내용을 저장했어요.');
+  }
+
+  /* 냉장고 품목 정보 저장 — 품목명은 필수·중복(자기 자신 제외) 금지 */
+  function saveFridgeItemEdit(card, it) {
+    const nameInp = card.querySelector('.edit-name');
+    const memoInp = card.querySelector('.edit-memo');
+    const catSel = card.querySelector('.edit-cat');
+    const name = nameInp ? nameInp.value.trim() : '';
+    if (!name) {
+      showToast('품목명을 비울 수 없어요.');
+      if (nameInp) nameInp.focus();
+      return;
+    }
+    const k = nameKey(name);
+    /* 이름을 그대로 두고 메모·카테고리만 고치는 경우는 중복 검사 없이 통과
+       (예전 저장값에 같은 이름이 둘 있었다면 자기 자신과 헷갈리지 않게) */
+    if (k !== nameKey(it.name)) {
+      for (let i = 0; i < state.fridge.length; i++) {
+        const other = state.fridge[i];
+        if (other.id !== it.id && nameKey(other.name) === k) {
+          showToast('이미 냉장고에 「' + other.name + '」이 있어요.');
+          if (nameInp) nameInp.focus();
+          return;
+        }
+      }
+    }
+    it.name = name;
+    it.memo = memoInp ? memoInp.value.trim() : it.memo;
+    if (catSel && CATS.indexOf(catSel.value) >= 0) it.cat = catSel.value;
+    editingFridgeId = null;
+    save();
+    renderFridge();
+    renderMenu();
+    showToast('수정했어요.');
+  }
+
+  /* ─────────── 장바구니 탭 ─────────── */
+  function renderCart() {
+    const n = state.cart.length;
+    const qtySum = state.cart.reduce((s, i) => s + i.qty, 0);
+    elCartTotal.innerHTML = '담은 품목 <b>' + n + '</b>건' + (n ? ' · 총 <b>' + qtySum + '</b>개' : '');
+
+    $('cartClear').disabled = n === 0;
+    const moveBtn = $('cartToFridge');
+    moveBtn.disabled = n === 0;
+    moveBtn.textContent = '🧊 담은 품목 냉장고로 옮기기' + (n ? ' (' + n + '건)' : '');
+
+    if (!n) {
+      elCartList.innerHTML = '<div class="empty">장바구니가 비어 있어요.<br>⭐ 자주 사는 품목에서 체크해 담거나, 🧊 냉장고에서 소진한 품목이 여기로 와요.</div>';
+      return;
+    }
+
+    elCartList.innerHTML = state.cart.map(it => {
+      const isCoupang = it.url && /(^|\.)coupang\.com$/i.test(hostOf(it.url));
+      const linkLabel = isCoupang ? '쿠팡 보기 ↗' : '링크 열기 ↗';
+      const linkHtml = it.url
+        ? '<a class="link-btn" href="' + esc(it.url) + '" target="_blank" rel="noopener noreferrer">' + linkLabel + '</a>'
+        : '<a class="link-btn no-link" href="' + esc(searchUrl(it.name)) + '" target="_blank" rel="noopener noreferrer">쿠팡 검색 ↗</a>';
+      return '<div class="card cart-card" data-id="' + esc(it.id) + '">' +
+        '<div class="cart-main">' +
+          '<div class="item-name">' + esc(it.name) + '</div>' +
+          (it.memo ? '<div class="item-meta">' + esc(it.memo) + '</div>' : '') +
+          '<div class="shop-tools">' +
+            '<div class="qty">' +
+              '<button type="button" data-action="qty-minus" aria-label="' + esc(it.name) + ' 수량 줄이기">−</button>' +
+              '<span aria-label="수량">' + it.qty + '</span>' +
+              '<button type="button" data-action="qty-plus" aria-label="' + esc(it.name) + ' 수량 늘리기">+</button>' +
+            '</div>' +
+            linkHtml +
+          '</div>' +
+        '</div>' +
+        '<button type="button" class="del-btn" data-action="del" aria-label="' + esc(it.name) + ' 장바구니에서 빼기">×</button>' +
+      '</div>';
+    }).join('');
+  }
+
+  /* 자주 사는 품목 카테고리 → 냉장고 카테고리 매핑 */
+  function fridgeCatFromShop(shopCat, name) {
+    if (shopCat === '육류·계란·수산') return '육류·수산·계란';
+    if (shopCat === '채소·과일') return '채소·두부·버섯';
+    return guessFridgeCat(name);   /* 기타·생필품 → 소스·양념 / 간편·면·음료 등 키워드로 */
+  }
+
+  /* 품목 하나를 냉장고에 보유 상태로 넣기 (같은 이름이면 중복 추가 없이 보유로) */
+  function sendToFridge(name, memo, shopCat) {
+    const k = nameKey(name);
+    let hit = null;
+    for (let i = 0; i < state.fridge.length; i++) {
+      if (nameKey(state.fridge[i].name) === k) { hit = state.fridge[i]; break; }
+    }
+    if (hit) {
+      const wasOut = !hit.inStock;
+      hit.inStock = true;
+      if (memo && !hit.memo) hit.memo = memo;
+      save(); render();
+      showToast(wasOut ? '냉장고 「' + hit.name + '」을 보유로 바꿨어요.' : '이미 냉장고에 있는 품목이에요. 보유로 표시돼 있어요.');
+      return;
+    }
+    state.fridge.unshift({
+      id: uid('f'), name: name, memo: memo || '',
+      cat: fridgeCatFromShop(shopCat, name), inStock: true
+    });
+    save(); render();
+    showToast('냉장고에 「' + name + '」 보유로 넣었어요.');
+  }
+
+  /* 체크한 자주 사는 품목을 장바구니로 이동 (같은 품목은 수량 합산) */
+  function moveCheckedToCart() {
+    const picked = state.list.filter(i => i.checked);
+    if (!picked.length) {
+      showToast('장바구니로 담을 품목을 먼저 체크해 주세요.');
+      return;
+    }
+    let merged = 0;
+    picked.forEach(it => {
+      const k = nameKey(it.name);
+      let hit = null;
+      for (let i = 0; i < state.cart.length; i++) {
+        if (nameKey(state.cart[i].name) === k) { hit = state.cart[i]; break; }
+      }
+      if (hit) {
+        hit.qty = Math.min(99, hit.qty + it.qty);
+        if (!hit.memo && it.memo) hit.memo = it.memo;
+        if (!hit.url && it.url) hit.url = it.url;
+        merged++;
+      } else {
+        state.cart.push({ id: uid('c'), name: it.name, memo: it.memo, url: it.url || '', qty: it.qty });
+      }
+      it.checked = false;
+    });
+    save(); render();
+    showToast('장바구니에 ' + picked.length + '건 담았어요.' + (merged ? ' 같은 품목 ' + merged + '건은 수량을 합쳤어요.' : ''));
+  }
+
+  /* 냉장고 품목명과 매칭되는 '자주 사는 품목' 찾기.
+     공백·괄호·대소문자를 지운 키로 ① 정확히 같음 → ② 부분 포함(둘 다 2자 이상) 순으로 고른다.
+     부분 포함이 여러 개면 품목명이 가장 짧은(요청에 가장 가까운) 것, 같으면 즐겨찾기를 고른다. */
+  function findShopMatch(name) {
+    const key = normForMatch(name);
+    if (!key) return null;
+    let exact = null, part = null, partLen = 0;
+    state.list.forEach(it => {
+      const lk = normForMatch(it.name);
+      if (!lk) return;
+      if (lk === key) { if (!exact) exact = it; return; }
+      if (key.length < 2 || lk.length < 2) return;
+      if (lk.indexOf(key) < 0 && key.indexOf(lk) < 0) return;
+      if (!part || lk.length < partLen || (lk.length === partLen && it.fav && !part.fav)) {
+        part = it; partLen = lk.length;
+      }
+    });
+    return exact || part;
+  }
+
+  /* 장바구니에 이미 같은 품목이 있는지 (같은 이름 → 부분 포함 순으로 안전하게 확인) */
+  function findCartHit(name) {
+    const k = nameKey(name);
+    const nk = normForMatch(name);
+    for (let i = 0; i < state.cart.length; i++) {
+      if (nameKey(state.cart[i].name) === k) return state.cart[i];
+    }
+    if (nk.length < 2) return null;
+    for (let i = 0; i < state.cart.length; i++) {
+      const ck = normForMatch(state.cart[i].name);
+      if (ck.length >= 2 && (ck.indexOf(nk) >= 0 || nk.indexOf(ck) >= 0)) return state.cart[i];
+    }
+    return null;
+  }
+
+  /* 냉장고 품목을 '소진'으로 바꿀 때 장바구니에 자동으로 담기.
+     자주 사는 품목에 같은 이름이 있으면 그 상품의 쿠팡 링크·규격/메모를 그대로 가져온다.
+     이미 장바구니에 있으면 중복 추가·수량 변경 없이 안내만 한다. */
+  function addSoldOutToCart(fridgeItem) {
+    if (!fridgeItem) return;
+    const prod = findShopMatch(fridgeItem.name);
+    const name = prod ? prod.name : fridgeItem.name;
+    const memo = prod ? (prod.memo || '') : (fridgeItem.memo || '');
+    const url = prod ? (prod.url || '') : '';
+
+    if (findCartHit(name)) {
+      showToast(name + ' 소진 처리했어요 (장바구니에 이미 있어요)');
+      return;
+    }
+    state.cart.push({ id: uid('c'), name: name, memo: memo, url: url, qty: 1 });
+    showToast(name + ' 소진 처리하고 장바구니에 담았어요');
+  }
+
+  /* ─────────── 메뉴 추천 탭 ─────────── */
+  /* 공백·괄호를 지운 비교용 문자열 (예: "곰곰 닭다리살 정육 (냉장) 600g" → "곰곰닭다리살정육600g") */
+  function normForMatch(s) {
+    return String(s == null ? '' : s).toLowerCase()
+      .replace(/\([^)]*\)/g, '')
+      .replace(/\[[^\]]*\]/g, '')
+      .replace(/[\s\u00A0]+/g, '')
+      .replace(/[()\[\]{}]/g, '');
+  }
+
+  /* 냉장고에서 보유 중인 품목 이름의 비교용 키 목록 */
+  function stockedKeys() {
+    const out = [];
+    state.fridge.forEach(f => {
+      if (!f.inStock) return;
+      const k = normForMatch(f.name);
+      if (k) out.push(k);
+    });
+    return out;
+  }
+
+  /* 양방향 부분 문자열 대조 */
+  function isStocked(ingKey, keys) {
+    if (!ingKey) return false;
+    for (let i = 0; i < keys.length; i++) {
+      const k = keys[i];
+      if (k.indexOf(ingKey) >= 0 || ingKey.indexOf(k) >= 0) return true;
+    }
+    return false;
+  }
+
+  function evalRecipe(r, keys) {
+    const have = [], miss = [];
+    r.items.forEach(it => {
+      if (isStocked(normForMatch(it), keys)) have.push(it);
+      else miss.push(it);
+    });
+    return { have: have, miss: miss };
+  }
+
+  function statusOf(missCount) {
+    if (missCount === 0) return { key: 'ok', label: '지금 바로 가능!' };
+    if (missCount <= 2) return { key: 'soon', label: '조금만 더 있으면 가능' };
+    return { key: 'far', label: '재료 부족' };
+  }
+
+  /* ── 내장 추천 레시피 (수정·삭제 불가한 기본 추천 풀) ──
+     name: 요리 이름 / items: 핵심 재료 / note: 한 줄 조리 팁
+     재료 이름은 기본 냉장고 품목과 부분 일치로 맞춰진다(예: '간장' ↔ '진간장'). */
+  const BUILTIN_RECIPES = [
+    { name: '목살 마늘구이', items: ['목살', '마늘', '간장'], note: '간장·마늘 양념에 10분 재웠다가 센 불에 노릇하게 굽기' },
+    { name: '목살 김치볶음', items: ['목살', '김치', '양파'], note: '목살 먼저 볶고 김치·양파 넣어 자작하게 볶기' },
+    { name: '닭다리살 간장조림', items: ['닭다리살', '간장', '마늘', '참기름'], note: '간장·마늘로 졸이다 불 끄고 참기름 한 방울' },
+    { name: '닭다리살 청양고추 볶음', items: ['닭다리살', '청양고추', '간장', '마늘'], note: '닭다리살 먼저 익힌 뒤 청양고추 듬뿍 넣어 볶기' },
+    { name: '닭볶음탕', items: ['닭다리살', '감자', '양파', '고추장'], note: '고추장 양념에 감자 넣고 자작하게 졸이기' },
+    { name: '닭다리살 버터구이', items: ['닭다리살', '마늘', '버터'], note: '버터에 마늘 볶다 닭다리살 올려 노릇하게' },
+    { name: '새우 계란볶음밥', items: ['새우', '대란', '간장'], note: '새우 볶다 계란 풀고 밥 넣어 간장으로 간하기' },
+    { name: '버터갈릭 새우구이', items: ['새우', '마늘', '버터'], note: '버터·다진 마늘 올려 200도에서 8분' },
+    { name: '마늘 새우 파스타', items: ['새우', '마늘', '올리브유', '파스타면'], note: '올리브유에 마늘 볶아 새우·면 넣고 버무리기' },
+    { name: '새우 감바스', items: ['새우', '마늘', '올리브유', '청양고추'], note: '약불에 마늘 천천히 익혀 향을 내고 새우 넣기' },
+    { name: '청양고추 계란말이', items: ['대란', '청양고추'], note: '청양고추 잘게 다져 계란에 섞어 도톰하게 말기' },
+    { name: '계란 장조림', items: ['대란', '간장', '마늘'], note: '삶은 계란에 간장·마늘 넣고 국물이 졸 때까지' },
+    { name: '몽글 계란찜', items: ['대란', '간장'], note: '계란 풀어 체에 걸러 약불에서 몽글몽글 찌기' },
+    { name: '새송이버섯 간장버터구이', items: ['새송이버섯', '간장', '버터'], note: '버섯 앞뒤로 구워 간장·버터 소스 입히기' },
+    { name: '새송이 굴소스볶음', items: ['새송이버섯', '굴소스', '마늘', '양파'], note: '굴소스만으로 간 해도 충분히 감칠맛 나요' },
+    { name: '콩나물 무침', items: ['콩나물', '마늘', '참기름'], note: '콩나물 삶아 찬물에 헹구고 마늘·참기름에 무치기' },
+    { name: '매콤 콩나물 불고기', items: ['콩나물', '목살', '고추장', '양파'], note: '고추장 양념 목살 볶다 마지막에 콩나물 올려 뚜껑' },
+    { name: '유부 우동', items: ['유부', '우동면', '간장'], note: '간장 국물에 유부·우동면 넣고 한소끔' },
+    { name: '유부 김치우동', items: ['유부', '우동면', '김치'], note: '김치 볶아 국물 내고 유부·우동면 넣기' },
+    { name: '된장찌개', items: ['된장', '두부', '애호박', '감자'], note: '된장 풀고 감자 먼저 익힌 뒤 두부·애호박 넣기' },
+    { name: '순두부찌개', items: ['순두부', '대란', '고추장', '청양고추'], note: '고추장으로 국물 내고 순두부·계란 넣어 끓이기' },
+    { name: '두부 김치', items: ['두부', '김치', '목살'], note: '두부 부쳐 두고 김치·목살 볶아 같이 내기' }
+  ];
+
+  /* '지금 바로 가능!' / '1개만 더 있으면 가능' 처럼 추천 카드에 쓰는 상태 */
+  function suggestStatusOf(missCount) {
+    if (missCount === 0) return { key: 'ok', label: '지금 바로 가능!' };
+    return { key: 'soon', label: missCount + '개만 더 있으면 가능' };
+  }
+
+  function recipeCardHtml(x) {
+    const r = x.r;
+    const st = statusOf(x.miss.length);
+
+    if (editingRecipeId === r.id) {
+      return '<div class="card recipe-card is-editing" data-id="' + esc(r.id) + '">' +
+        '<div class="item-editor recipe-editor">' +
+          '<div class="edit-row"><span class="edit-label">요리 이름</span>' +
+            '<input class="r-name" type="text" value="' + esc(r.name) + '" placeholder="요리 이름" aria-label="요리 이름"></div>' +
+          '<div class="edit-row"><span class="edit-label">재료</span>' +
+            '<input class="r-items" type="text" value="' + esc(r.items.join(', ')) + '" placeholder="닭다리살, 깐마늘" aria-label="필요 재료"></div>' +
+          '<div class="edit-row"><span class="edit-label">메모</span>' +
+            '<input class="r-memo" type="text" value="' + esc(r.memo) + '" placeholder="조리법·메모" aria-label="조리법 메모"></div>' +
+          '<div class="edit-actions">' +
+            '<button type="button" class="save" data-action="recipe-save">저장</button>' +
+            '<button type="button" class="cancel" data-action="recipe-cancel">취소</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    const tags = r.items.map(it => {
+      const has = x.have.indexOf(it) >= 0;
+      return '<span class="ing ' + (has ? 'have' : 'miss') + '"><span class="ing-mark">' + (has ? '✓' : '+') + '</span>' + esc(it) + '</span>';
+    }).join('');
+
+    const actions =
+      '<button type="button" class="mini-btn" data-action="recipe-edit" aria-label="' + esc(r.name) + ' 레시피 수정">✎ 수정</button>' +
+      (x.miss.length
+        ? '<button type="button" class="mini-btn fridge-btn" data-action="recipe-cart" aria-label="' + esc(r.name) + ' 부족한 재료 장바구니 담기">🛒 부족한 재료 장바구니 담기 (' + x.miss.length + ')</button>'
+        : '');
+
+    return '<div class="card recipe-card" data-id="' + esc(r.id) + '">' +
+      '<div class="recipe-head">' +
+        '<div class="recipe-name">' + esc(r.name) + '</div>' +
+        '<span class="recipe-badge ' + st.key + '">' + st.label + '</span>' +
+      '</div>' +
+      '<div class="recipe-tags">' + tags + '</div>' +
+      (r.memo ? '<div class="recipe-memo">' + esc(r.memo) + '</div>' : '') +
+      '<div class="recipe-actions">' + actions + '</div>' +
+      '<button type="button" class="del-btn" data-action="recipe-del" aria-label="' + esc(r.name) + ' 레시피 삭제">×</button>' +
+    '</div>';
+  }
+
+  /* 추천 레시피 카드 (내장 DB → 내 레시피로 저장 / 부족 재료 담기) */
+  function suggestCardHtml(x) {
+    const b = x.r;
+    const st = suggestStatusOf(x.miss.length);
+    const tags = b.items.map(it => {
+      const has = x.have.indexOf(it) >= 0;
+      return '<span class="ing ' + (has ? 'have' : 'miss') + '"><span class="ing-mark">' + (has ? '✓' : '+') + '</span>' + esc(it) + '</span>';
+    }).join('');
+    const actions =
+      (x.miss.length
+        ? '<button type="button" class="mini-btn fridge-btn" data-action="suggest-cart" aria-label="' + esc(b.name) + ' 부족한 재료 ' + x.miss.length + '개 장바구니 담기">🛒 부족한 재료 담기 (' + x.miss.length + ')</button>'
+        : '') +
+      '<button type="button" class="mini-btn" data-action="suggest-save" aria-label="' + esc(b.name) + ' 내 레시피로 저장">⭐ 내 레시피로 저장</button>';
+
+    return '<div class="card recipe-card suggest-card" data-bidx="' + x.bi + '">' +
+      '<div class="recipe-head">' +
+        '<div class="recipe-name">' + esc(b.name) + '</div>' +
+        '<span class="recipe-badge ' + st.key + '">' + st.label + '</span>' +
+      '</div>' +
+      '<div class="recipe-tags">' + tags + '</div>' +
+      (b.note ? '<div class="recipe-memo">' + esc(b.note) + '</div>' : '') +
+      '<div class="recipe-actions">' + actions + '</div>' +
+    '</div>';
+  }
+
+  /* 받침 유무에 맞춰 '을/를' 고르기 (예: 마늘구이 → 를, 찜닭 → 을) */
+  function josaEul(word) {
+    const s2 = String(word == null ? '' : word).trim();
+    if (!s2) return '을';
+    const code = s2.charCodeAt(s2.length - 1) - 0xAC00;
+    if (code < 0 || code > 11171) return '을';
+    return (code % 28 === 0) ? '를' : '을';
+  }
+
+  /* 추천 요리를 내 레시피로 저장 (이미 같은 이름이 있으면 중복 저장 않음) */
+  function saveSuggestionAsRecipe(b) {
+    if (!b) return;
+    const nk = normForMatch(b.name);
+    for (let i = 0; i < state.recipes.length; i++) {
+      if (normForMatch(state.recipes[i].name) === nk) {
+        showToast('이미 내 레시피에 있는 요리예요.');
+        return;
+      }
+    }
+    state.recipes.unshift({ id: uid('r'), name: b.name, items: b.items.slice(), memo: b.note || '' });
+    save(); renderMenu();
+    showToast('「' + b.name + '」' + josaEul(b.name) + ' 내 레시피에 저장했어요.');
+  }
+
+  function renderMenu() {
+    const keys = stockedKeys();
+    const rows = state.recipes.map((r, i) => {
+      const e = evalRecipe(r, keys);
+      return { r: r, i: i, have: e.have, miss: e.miss };
+    });
+
+    /* 내장 추천: 내 레시피와 같은 이름은 빼고, 부족 2개까지만 */
+    const mine = {};
+    state.recipes.forEach(r => {
+      const k = normForMatch(r.name);
+      if (k) mine[k] = true;
+    });
+    const sug = [];
+    BUILTIN_RECIPES.forEach((b, bi) => {
+      const k = normForMatch(b.name);
+      if (!k || mine[k]) return;
+      const e = evalRecipe(b, keys);
+      if (e.miss.length > 2) return;
+      sug.push({ r: b, bi: bi, have: e.have, miss: e.miss });
+    });
+    sug.sort((a, b) => (a.miss.length - b.miss.length) ||
+      (a.r.items.length - b.r.items.length) || (a.bi - b.bi));
+
+    const myOk = rows.filter(x => x.miss.length === 0).length;
+    const mySoon = rows.filter(x => x.miss.length > 0 && x.miss.length <= 2).length;
+    const myFar = rows.length - myOk - mySoon;
+    const sugOk = sug.filter(x => x.miss.length === 0).length;
+    const sugSoon = sug.length - sugOk;
+
+    elMenuSummary.innerHTML =
+      '<div class="sum-item"><div class="sum-label">지금 가능</div><div class="sum-value">' + (myOk + sugOk) + '<span class="unit">개</span></div></div>' +
+      '<div class="sum-item"><div class="sum-label">거의 가능</div><div class="sum-value">' + (mySoon + sugSoon) + '<span class="unit">개</span></div></div>' +
+      '<div class="sum-item"><div class="sum-label">재료 부족</div><div class="sum-value">' + myFar + '<span class="unit">개</span></div></div>';
+
+    /* 메뉴 추천 상태 칩도 이름만 표시(개수 숫자 없음) — 냉장고·자주 사는 품목·가계부 칩과 같은 방식 */
+    const chipDefs = [
+      ['all', '전체'],
+      ['ok', '지금 가능'],
+      ['soon', '거의 가능']
+    ];
+    elMenuChips.innerHTML = chipDefs.map(c =>
+      '<button type="button" class="chip' + (activeMenuFilter === c[0] ? ' on' : '') + '" data-mfilter="' + c[0] + '" aria-pressed="' + (activeMenuFilter === c[0]) + '">' +
+      esc(c[1]) + '</button>'
+    ).join('');
+
+    /* 필터는 두 섹션 모두에 같이 적용 */
+    let myList = rows.slice();
+    let sugList = sug.slice();
+    if (activeMenuFilter === 'ok') {
+      myList = myList.filter(x => x.miss.length === 0);
+      sugList = sugList.filter(x => x.miss.length === 0);
+    } else if (activeMenuFilter === 'soon') {
+      myList = myList.filter(x => x.miss.length > 0 && x.miss.length <= 2);
+      sugList = sugList.filter(x => x.miss.length > 0 && x.miss.length <= 2);
+    }
+    myList.sort((a, b) => (a.miss.length - b.miss.length) || (a.i - b.i));
+
+    elMenuMyCount.textContent = String(myList.length);
+    elSuggestCount.textContent = String(sugList.length);
+
+    if (!myList.length) {
+      elMenuList.innerHTML = '<div class="empty">' +
+        (state.recipes.length
+          ? '이 상태에 맞는 레시피가 없어요.'
+          : '내 레시피가 없어요. 아래에서 등록하거나, 추천 요리를 ⭐ 로 저장해 보세요.') +
+        '</div>';
+    } else {
+      elMenuList.innerHTML = myList.map(recipeCardHtml).join('');
+    }
+
+    if (!sugList.length) {
+      elSuggestList.innerHTML = '<div class="empty">' +
+        (sug.length
+          ? '이 상태에 맞는 추천 요리가 없어요.'
+          : '지금은 추천할 요리가 없어요. 냉장고 재료를 조금 더 채우면 다시 골라 드릴게요.') +
+        '</div>';
+    } else {
+      elSuggestList.innerHTML = sugList.map(suggestCardHtml).join('');
+    }
+
+    renderPlan();
+  }
+
+  /* ─────────── 📅 주간 식단표 ─────────── */
+  const PLAN_DAYS = ['월', '화', '수', '목', '금', '토', '일'];
+
+  /* 편성 대상 풀: 내 레시피 + 내장 추천 레시피 (이름 중복 제거, 내 레시피 우선) */
+  function recipePool() {
+    const keys = stockedKeys();
+    const pool = [];
+    const seen = {};
+    function push(name, items, memo) {
+      const k = normForMatch(name);
+      if (!k || seen[k]) return;
+      seen[k] = true;
+      const r = { name: name, items: items.slice(), memo: memo || '' };
+      const e = evalRecipe(r, keys);
+      pool.push({
+        name: r.name, items: r.items, memo: r.memo,
+        have: e.have, miss: e.miss,
+        main: normForMatch(r.items.length ? r.items[0] : '')
+      });
+    }
+    state.recipes.forEach(r => push(r.name, r.items, r.memo));
+    BUILTIN_RECIPES.forEach(b => push(b.name, b.items, b.note));
+    return pool;
+  }
+
+  /* 우선순위: 0 = 지금 가능(부족 0), 1 = 1~2개 부족, 2 = 그 외 */
+  function planTier(missCount) {
+    if (missCount === 0) return 0;
+    if (missCount <= 2) return 1;
+    return 2;
+  }
+
+  function shuffleArr(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  /* 주재료가 같은 재료인지 (새우 ↔ 새우살, 마늘 ↔ 깐마늘 처럼 한쪽이 다른 쪽을 품으면 같은 것으로 본다) */
+  function mainSame(a, b) {
+    if (!a || !b) return false;
+    if (a === b) return true;
+    if (a.length < 2 || b.length < 2) return false;
+    return a.indexOf(b) >= 0 || b.indexOf(a) >= 0;
+  }
+
+  /* 7일 편성: 지금 가능한 메뉴 우선 → 이름 중복 없이 → 연속 요일 주재료 분산 */
+  function composeWeek(pool) {
+    const ranked = shuffleArr(pool.slice());
+    ranked.forEach((p, i) => { p.__rank = i; });
+    ranked.sort((a, b) =>
+      (planTier(a.miss.length) - planTier(b.miss.length)) || (a.__rank - b.__rank));
+
+    const rest = ranked.slice();
+    const picked = [];
+    let prevMain = '';
+    while (picked.length < PLAN_DAYS.length && rest.length) {
+      let at = 0;
+      for (let i = 0; i < rest.length; i++) {
+        if (!rest[i].main || !mainSame(rest[i].main, prevMain)) { at = i; break; }
+      }
+      const p = rest.splice(at, 1)[0];
+      picked.push({ name: p.name, items: p.items.slice(), done: false });
+      prevMain = p.main;
+    }
+    return picked;
+  }
+
+  function planKey(p) {
+    return normForMatch(p && p.name ? p.name : '');
+  }
+
+  function samePlanNames(a, b) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) { if (a[i] !== b[i]) return false; }
+    return true;
+  }
+
+  /* 저장된 식단표가 7일치로 온전하지 않으면 조용히 한 번 새로 편성 */
+  function ensureWeeklyPlan() {
+    if (Array.isArray(state.weeklyPlan) && state.weeklyPlan.length === PLAN_DAYS.length) return;
+    state.weeklyPlan = composeWeek(recipePool());
+    save();
+  }
+
+  /* 🎲 안 겹치게 자동 식단 짜기 — 누를 때마다 다른 조합 */
+  function generateWeeklyPlan() {
+    const pool = recipePool();
+    if (!pool.length) {
+      showToast('편성할 레시피가 없어요. 내 레시피를 먼저 등록해 주세요.');
+      return;
+    }
+    const prevNames = (state.weeklyPlan || []).map(planKey);
+    let plan = composeWeek(pool);
+    let tries = 0;
+    while (prevNames.length && tries < 12 && samePlanNames(plan.map(planKey), prevNames)) {
+      plan = composeWeek(pool);
+      tries++;
+    }
+    state.weeklyPlan = plan;
+    editingPlanDay = -1;
+    save();
+    renderPlan();
+    showToast('7일 식단을 새로 짰어요. 이번 주는 겹치는 메뉴 없이 골랐어요.');
+  }
+
+  function planCardHtml(p, d, keys) {
+    const day = PLAN_DAYS[d];
+    const wknd = d >= 5 ? ' wknd' : '';
+    const check =
+      '<button type="button" class="plan-check' + (p.done ? ' on' : '') + '" data-action="plan-done" role="checkbox" aria-checked="' + !!p.done + '" aria-label="' + day + '요일 ' + esc(p.name) + ' 완료 체크">' + (p.done ? '✓' : '') + '</button>';
+    const dayBadge = '<span class="plan-day' + wknd + '">' + day + '</span>';
+
+    if (editingPlanDay === d) {
+      return '<div class="card plan-card' + (p.done ? ' is-done' : '') + '" data-day="' + d + '">' +
+        '<div class="plan-head">' + check + dayBadge +
+          '<div class="plan-main">' +
+            '<div class="plan-edit">' +
+              '<input class="plan-name-input" type="text" value="' + esc(p.name) + '" placeholder="먹고 싶은 메뉴 이름" aria-label="' + day + '요일 메뉴 이름">' +
+              '<button type="button" class="save" data-action="plan-save">저장</button>' +
+              '<button type="button" class="cancel" data-action="plan-cancel">취소</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    const items = p.items || [];
+    const e = evalRecipe({ items: items }, keys);
+    const tags = items.map(it => {
+      const has = e.have.indexOf(it) >= 0;
+      return '<span class="ing ' + (has ? 'have' : 'miss') + '"><span class="ing-mark">' + (has ? '✓' : '+') + '</span>' + esc(it) + '</span>';
+    }).join('');
+    const note = !items.length
+      ? '<span class="plan-note custom">직접 입력한 메뉴</span>'
+      : (e.miss.length === 0
+          ? '<span class="plan-note ok">냉장고 재료로 바로 가능</span>'
+          : '<span class="plan-note soon">재료 ' + e.miss.length + '개만 더 있으면 가능</span>');
+
+    const actions =
+      (items.length && e.miss.length
+        ? '<button type="button" class="mini-btn fridge-btn" data-action="plan-miss" aria-label="' + esc(p.name) + ' 부족한 재료 ' + e.miss.length + '개 장바구니 담기">🛒 부족 재료 담기 (' + e.miss.length + ')</button>'
+        : '') +
+      '<button type="button" class="mini-btn" data-action="plan-swap" aria-label="' + day + '요일 메뉴 바꾸기">🔄 바꾸기</button>' +
+      '<button type="button" class="mini-btn" data-action="plan-edit" aria-label="' + day + '요일 메뉴 직접 수정">✎ 수정</button>';
+
+    return '<div class="card plan-card' + (p.done ? ' is-done' : '') + '" data-day="' + d + '">' +
+      '<div class="plan-head">' + check + dayBadge +
+        '<div class="plan-main">' +
+          '<div class="plan-name">' + esc(p.name) + '</div>' + note +
+          (tags ? '<div class="recipe-tags plan-tags">' + tags + '</div>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="recipe-actions plan-actions">' + actions + '</div>' +
+    '</div>';
+  }
+
+  function renderPlan() {
+    ensureWeeklyPlan();
+    const plan = state.weeklyPlan || [];
+    const total = PLAN_DAYS.length;
+    const done = plan.filter(p => p && p.done).length;
+    const pct = Math.round(done / total * 100);
+
+    if (elPlanDoneN) elPlanDoneN.textContent = String(done);
+    if (elPlanDonePct) elPlanDonePct.textContent = pct + '%';
+    if (elPlanFill) elPlanFill.style.width = pct + '%';
+    if (elPlanTrack) elPlanTrack.setAttribute('aria-valuenow', String(done));
+
+    if (!elPlanList) return;
+    if (!plan.length) {
+      elPlanList.innerHTML = '<div class="empty">식단표를 아직 짜지 않았어요. 🎲 버튼으로 7일 식단을 짜 보세요.</div>';
+      return;
+    }
+    const keys = stockedKeys();
+    elPlanList.innerHTML = plan.map((p, d) => planCardHtml(p, d, keys)).join('');
+  }
+
+  /* 🔄 바꾸기: 이번 주에 안 들어간 메뉴 중에서, 옆 요일과 주재료가 다른 것 우선 */
+  function swapPlanDay(d) {
+    const plan = state.weeklyPlan;
+    const pool = recipePool();
+    if (!Array.isArray(plan) || !plan[d] || !pool.length) return;
+    const cur = planKey(plan[d]);
+    const inPlan = {};
+    plan.forEach(p => { const k = planKey(p); if (k) inPlan[k] = true; });
+    const fresh = pool.filter(p => { const k = normForMatch(p.name); return k && k !== cur && !inPlan[k]; });
+
+    let pick = null;
+    if (fresh.length) {
+      const prevMain = d > 0 ? normForMatch((plan[d - 1].items || [])[0] || '') : '';
+      const nextMain = d < plan.length - 1 ? normForMatch((plan[d + 1].items || [])[0] || '') : '';
+      const good = fresh.filter(p => !mainSame(p.main, prevMain) && !mainSame(p.main, nextMain));
+      const src = good.length ? good : fresh;
+      pick = src[Math.floor(Math.random() * src.length)];
+    } else {
+      /* 풀을 다 쓴 경우엔 전체 풀을 순환 */
+      for (let i = 1; i <= pool.length; i++) {
+        const cand = pool[(planRotate + i) % pool.length];
+        if (normForMatch(cand.name) !== cur) { pick = cand; planRotate = (planRotate + i) % pool.length; break; }
+      }
+      if (!pick) pick = pool[planRotate % pool.length];
+    }
+
+    const wasDone = !!plan[d].done;
+    plan[d] = { name: pick.name, items: pick.items.slice(), done: false };
+    editingPlanDay = -1;
+    save(); renderPlan();
+    showToast(PLAN_DAYS[d] + '요일을 「' + pick.name + '」' + josaEul(pick.name) + ' 바꿨어요' + (wasDone ? ' (완료 체크는 풀렸어요)' : ''));
+  }
+
+  function findPoolRecipe(name) {
+    const k = normForMatch(name);
+    if (!k) return null;
+    const pool = recipePool();
+    for (let i = 0; i < pool.length; i++) {
+      if (normForMatch(pool[i].name) === k) return pool[i];
+    }
+    return null;
+  }
+
+  /* ✎ 수정: 원하는 메뉴명을 직접 입력 */
+  function savePlanEdit(card, d) {
+    const inp = card ? card.querySelector('.plan-name-input') : null;
+    const name = inp ? inp.value.trim() : '';
+    if (!name) {
+      showToast('메뉴 이름을 비울 수 없어요.');
+      if (inp) inp.focus();
+      return;
+    }
+    const old = state.weeklyPlan[d] || {};
+    const hit = findPoolRecipe(name);
+    state.weeklyPlan[d] = {
+      name: name,
+      items: hit ? hit.items.slice() : [],
+      done: !!old.done
+    };
+    editingPlanDay = -1;
+    save(); renderPlan();
+    showToast(PLAN_DAYS[d] + '요일 메뉴를 「' + name + '」' + josaEul(name) + ' 바꿨어요.');
+  }
+
+  /* 메뉴 추천 하위 탭 전환 */
+  function setMenuPane(pane) {
+    menuPane = (pane === 'plan') ? 'plan' : 'cook';
+    if (menuPane !== 'plan') editingPlanDay = -1;   /* 화면을 떠나면 인라인 수정은 닫기 */
+    if (elPaneCook) elPaneCook.hidden = menuPane !== 'cook';
+    if (elPanePlan) elPanePlan.hidden = menuPane !== 'plan';
+    [['segCook', 'cook'], ['segPlan', 'plan']].forEach(pair => {
+      const b = $(pair[0]);
+      if (!b) return;
+      const on = menuPane === pair[1];
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-selected', String(on));
+    });
+    if (menuPane === 'plan') renderPlan();
+  }
+
+  /* 부족 재료를 장바구니로 (자주 사는 품목에 상품이 있으면 그 이름·쿠팡 링크를 그대로) */
+  function addMissingToCart(r) {
+    const keys = stockedKeys();
+    const miss = r.items.filter(it => !isStocked(normForMatch(it), keys));
+    if (!miss.length) { showToast('부족한 재료가 없어요. 바로 만들 수 있어요!'); return; }
+
+    let added = 0, merged = 0, fromShop = 0;
+    miss.forEach(ing => {
+      const ik = normForMatch(ing);
+      let prod = null;
+      for (let i = 0; i < state.list.length; i++) {
+        const lk = normForMatch(state.list[i].name);
+        if (lk && (lk.indexOf(ik) >= 0 || ik.indexOf(lk) >= 0)) { prod = state.list[i]; break; }
+      }
+      const name = prod ? prod.name : ing;
+      const url = prod ? (prod.url || '') : '';
+      const memo = prod ? (prod.memo || '') : '';
+      if (prod) fromShop++;
+
+      const ck = nameKey(name);
+      let hit = null;
+      for (let j = 0; j < state.cart.length; j++) {
+        if (nameKey(state.cart[j].name) === ck) { hit = state.cart[j]; break; }
+      }
+      if (hit) { hit.qty = Math.min(99, hit.qty + 1); merged++; }
+      else { state.cart.push({ id: uid('c'), name: name, memo: memo, url: url, qty: 1 }); added++; }
+    });
+
+    save(); renderCart(); renderCta(); renderBadge();
+    showToast('부족한 재료 ' + miss.length + '개를 장바구니에 담았어요.' +
+      (fromShop ? ' 자주 사는 품목 ' + fromShop + '개는 상품 그대로 담았어요.' : '') +
+      (merged ? ' 이미 담긴 ' + merged + '개는 수량을 늘렸어요.' : ''));
+  }
+
+  function saveRecipeEdit(card, r) {
+    const nameInp = card.querySelector('.r-name');
+    const itemsInp = card.querySelector('.r-items');
+    const memoInp = card.querySelector('.r-memo');
+    const name = nameInp ? nameInp.value.trim() : '';
+    if (!name) {
+      showToast('요리 이름을 비울 수 없어요.');
+      if (nameInp) nameInp.focus();
+      return;
+    }
+    const items = parseIngredientText(itemsInp ? itemsInp.value : '');
+    if (!items.length) {
+      showToast('필요 재료를 하나 이상 적어 주세요.');
+      if (itemsInp) itemsInp.focus();
+      return;
+    }
+    r.name = name;
+    r.items = items;
+    r.memo = memoInp ? memoInp.value.trim() : '';
+    editingRecipeId = null;
+    save(); renderMenu();
+    showToast('레시피를 저장했어요.');
+  }
+
+  function renderCta() {
+    const n = state.list.filter(i => i.checked).length;
+    elToCartBtn.textContent = '🛒 장바구니로 담기 (선택 ' + n + '건)';
+    elToCartBtn.classList.toggle('dim', n === 0);
+
+    const c = state.cart.length;
+    elCopyBtn.textContent = '🛒 됴니에게 쿠팡 주문 요청 복사 (' + c + '건)';
+    elCopyBtn.classList.toggle('dim', c === 0);
+  }
+
+  function renderBadge() {
+    const n = state.cart.length;
+    if (n > 0) { elBadge.hidden = false; elBadge.textContent = String(n); }
+    else { elBadge.hidden = true; }
+  }
+
+  /* ─────────── 화면 전환 ─────────── */
+  const VIEW_META = {
+    fridge: { ico: '🧊', title: '냉장고 재고' },
+    shop: { ico: '⭐', title: '자주 사는 품목' },
+    cart: { ico: '🛒', title: '장바구니' },
+    menu: { ico: '🍳', title: '메뉴 추천' },
+    ledger: { ico: '📒', title: '가계부' }
+  };
+  const normalizeTab = (tab) => VIEW_META[tab] ? tab : 'fridge';
+
+  function setView(tab, silent) {
+    const t = normalizeTab(tab);
+    elFridge.hidden = t !== 'fridge';
+    elShop.hidden = t !== 'shop';
+    elCart.hidden = t !== 'cart';
+    elMenu.hidden = t !== 'menu';
+    elLedger.hidden = t !== 'ledger';
+    elCtaBar.hidden = t !== 'shop';
+    elCartCtaBar.hidden = t !== 'cart';
+    document.body.classList.toggle('has-cta', t === 'shop' || t === 'cart');
+
+    const tabs = [['fridge', 'tabFridge'], ['shop', 'tabShop'], ['cart', 'tabCart'], ['menu', 'tabMenu'], ['ledger', 'tabLedger']];
+    tabs.forEach(pair => {
+      const b = $(pair[1]);
+      const on = t === pair[0];
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-selected', String(on));
+    });
+
+    elHeadIcon.textContent = VIEW_META[t].ico;
+    elHeadTitle.textContent = VIEW_META[t].title;
+
+    /* 다른 탭으로 옮겨가도 냉장고 품목 편집 상태가 남지 않게 */
+    if (editingFridgeId) { editingFridgeId = null; renderFridge(); }
+
+    state.tab = t;
+    if (!silent) save();
+    window.scrollTo(0, 0);
+  }
+
+  /* ─────────── 렌더 총괄 ─────────── */
+  function render() {
+    renderFridge();
+    renderShop();
+    renderCart();
+    renderMenu();
+    renderLedger();
+    renderCta();
+    renderBadge();
+  }
+
+  /* ─────────── 냉장고 이벤트 ─────────── */
+  elSearch.addEventListener('input', () => {
+    query = elSearch.value;
+    editingFridgeId = null;   /* 편집 중 검색하면 편집 상태를 정리 */
+    elSearchBox.classList.toggle('has-text', query.length > 0);
+    renderFridge();
+  });
+  $('searchClear').addEventListener('click', () => {
+    elSearch.value = '';
+    query = '';
+    elSearchBox.classList.remove('has-text');
+    elSearch.focus();
+    renderFridge();
+  });
+
+  elChips.addEventListener('click', (e) => {
+    const b = e.target.closest('.chip');
+    if (!b) return;
+    activeCat = b.getAttribute('data-cat');
+    editingFridgeId = null;
+    renderFridge();
+  });
+
+  elFridgeList.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const card = btn.closest('[data-id]');
+    if (!card) return;
+    const id = card.getAttribute('data-id');
+    const idx = state.fridge.findIndex(i => i.id === id);
+    if (idx < 0) return;
+    const action = btn.getAttribute('data-action');
+
+    /* 편집 중 다른 품목을 건드리면 이전 편집 상태를 먼저 정리(상태 꼬임 방지) */
+    if (editingFridgeId && editingFridgeId !== id) editingFridgeId = null;
+
+    if (action === 'edit') {
+      editingFridgeId = id;
+      renderFridge();
+      const inp = elFridgeList.querySelector('.item-card[data-id="' + cssEscape(id) + '"] .edit-name');
+      if (inp) {
+        inp.focus();
+        try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (err) {}
+      }
+    } else if (action === 'edit-cancel') {
+      editingFridgeId = null;
+      renderFridge();
+    } else if (action === 'edit-save') {
+      saveFridgeItemEdit(card, state.fridge[idx]);
+    } else if (action === 'toggle') {
+      const item = state.fridge[idx];
+      const wasInStock = item.inStock;
+      item.inStock = !item.inStock;
+      /* 보유 → 소진 으로 바뀔 때만 자동으로 장바구니에 담는다 (소진 → 보유 는 상태만 되돌림) */
+      if (wasInStock && !item.inStock) addSoldOutToCart(item);
+      save();
+      renderFridge();
+      renderMenu();
+      renderCart();
+      renderCta();
+      renderBadge();
+      if (wasInStock && !item.inStock) return;   /* 토스트는 addSoldOutToCart 안내 사용 */
+      showToast(item.inStock ? '보유로 표시했어요.' : '소진으로 표시했어요.');
+    } else if (action === 'del') {
+      const item = state.fridge[idx];
+      state.fridge.splice(idx, 1);
+      save();
+      renderFridge();
+      renderMenu();
+      lastDeleted = { list: 'fridge', item: item, index: idx };
+      showToast('냉장고에서 뺐어요.', () => {
+        if (!lastDeleted || lastDeleted.list !== 'fridge') return;
+        state.fridge.splice(Math.min(lastDeleted.index, state.fridge.length), 0, lastDeleted.item);
+        lastDeleted = null;
+        save();
+        renderFridge();
+        renderMenu();
+      });
+    }
+  });
+
+  elFridgeList.addEventListener('keydown', (e) => {
+    const t = e.target;
+    const cls = (t && t.classList) ? t.classList : null;
+    if (!cls) return;
+    const isEditField = cls.contains('edit-name') || cls.contains('edit-memo');
+    const isEditSelect = cls.contains('edit-cat');
+    if (!isEditField && !isEditSelect) return;
+
+    if (e.key === 'Enter' && isEditField) {
+      e.preventDefault();
+      const card = t.closest('[data-id]');
+      if (card) {
+        const saveBtn = card.querySelector('[data-action="edit-save"]');
+        if (saveBtn) saveBtn.click();
+      }
+    } else if (e.key === 'Escape') {
+      editingFridgeId = null;
+      renderFridge();
+    }
+  });
+
+  $('fridgeForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const nameEl = $('fridgeName'), memoEl = $('fridgeMemo');
+    const name = nameEl.value.trim();
+    if (!name) { nameEl.focus(); return; }
+    state.fridge.unshift({
+      id: uid('f'), name: name, memo: memoEl.value.trim(),
+      cat: elFridgeCat.value, inStock: true
+    });
+    nameEl.value = ''; memoEl.value = '';
+    activeCat = '전체';
+    editingFridgeId = null;
+    query = ''; elSearch.value = ''; elSearchBox.classList.remove('has-text');
+    save();
+    renderFridge();
+    renderMenu();
+    showToast('냉장고에 추가했어요.');
+    nameEl.focus();
+  });
+
+  /* ─────────── 장보기 이벤트 ─────────── */
+  elSortBtn.addEventListener('click', () => {
+    state.favFirst = !state.favFirst;
+    save();
+    renderShop();
+  });
+
+  elShopChips.addEventListener('click', (e) => {
+    const b = e.target.closest('.chip');
+    if (!b) return;
+    activeShopCat = b.getAttribute('data-scat');
+    editingItemId = null;
+    editingId = null;
+    renderShop();
+  });
+
+  elShopList.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const card = btn.closest('[data-id]');
+    if (!card) return;
+    const id = card.getAttribute('data-id');
+    const idx = state.list.findIndex(i => i.id === id);
+    if (idx < 0) return;
+    const it = state.list[idx];
+    const action = btn.getAttribute('data-action');
+
+    if (action === 'fav') {
+      it.fav = !it.fav;
+      save(); renderShop();
+    } else if (action === 'check') {
+      it.checked = !it.checked;
+      save(); renderShop(); renderCta();
+      if (it.checked) showToast('장바구니로 담을 품목을 체크했어요.');
+    } else if (action === 'to-fridge') {
+      sendToFridge(it.name, it.memo, it.cat);
+    } else if (action === 'qty-plus') {
+      it.qty = Math.min(99, it.qty + 1);
+      save(); renderShop();
+    } else if (action === 'qty-minus') {
+      if (it.qty <= 1) { showToast('수량은 1개부터예요.'); return; }
+      it.qty -= 1;
+      save(); renderShop();
+    } else if (action === 'item-edit') {
+      editingItemId = id;
+      editingId = null;
+      renderShop();
+      const inp = elShopList.querySelector('.shop-card[data-id="' + cssEscape(id) + '"] .edit-name');
+      if (inp) {
+        inp.focus();
+        try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (err) {}
+      }
+    } else if (action === 'edit-cancel') {
+      editingItemId = null;
+      renderShop();
+    } else if (action === 'edit-save') {
+      saveItemEdit(card, it);
+    } else if (action === 'link-edit') {
+      editingId = id;
+      editingItemId = null;
+      renderShop();
+      const inp = elShopList.querySelector('.shop-card[data-id="' + cssEscape(id) + '"] .url-input');
+      if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+    } else if (action === 'link-cancel') {
+      editingId = null;
+      renderShop();
+    } else if (action === 'link-save') {
+      const inp = card.querySelector('.url-input');
+      const raw = inp ? inp.value.trim() : '';
+      if (!raw) {
+        it.url = '';
+        editingId = null;
+        save(); renderShop();
+        showToast('링크를 비웠어요. 쿠팡 검색으로 연결돼요.');
+        return;
+      }
+      const fixed = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw.replace(/^\/+/, '');
+      if (!/^https?:\/\/[^\s.]+\.[^\s]+/i.test(fixed)) {
+        showToast('주소 형식을 확인해 주세요. (예: https://...)');
+        if (inp) inp.focus();
+        return;
+      }
+      it.url = fixed;
+      editingId = null;
+      save(); renderShop();
+      showToast('쿠팡 링크를 저장했어요.');
+    } else if (action === 'del') {
+      const item = it;
+      state.list.splice(idx, 1);
+      if (editingId === id) editingId = null;
+      if (editingItemId === id) editingItemId = null;
+      lastDeleted = { list: 'shop', item: item, index: idx };
+      save(); renderShop(); renderCta(); renderBadge();
+      showToast('목록에서 뺐어요.', () => {
+        if (!lastDeleted || lastDeleted.list !== 'shop') return;
+        state.list.splice(Math.min(lastDeleted.index, state.list.length), 0, lastDeleted.item);
+        lastDeleted = null;
+        save(); renderShop(); renderCta(); renderBadge();
+      });
+    }
+  });
+
+  elShopList.addEventListener('keydown', (e) => {
+    const t = e.target;
+    const cls = (t && t.classList) ? t.classList : null;
+    if (!cls) return;
+
+    const isUrl = cls.contains('url-input');
+    const isEditField = cls.contains('edit-name') || cls.contains('edit-memo');
+    const isEditSelect = cls.contains('edit-cat');
+
+    if (e.key === 'Enter' && isUrl) {
+      e.preventDefault();
+      const card = t.closest('[data-id]');
+      if (card) {
+        const saveBtn = card.querySelector('[data-action="link-save"]');
+        if (saveBtn) saveBtn.click();
+      }
+    } else if (e.key === 'Enter' && isEditField) {
+      e.preventDefault();
+      const card = t.closest('[data-id]');
+      if (card) {
+        const saveBtn = card.querySelector('[data-action="edit-save"]');
+        if (saveBtn) saveBtn.click();
+      }
+    } else if (e.key === 'Escape' && isUrl) {
+      editingId = null;
+      renderShop();
+    } else if (e.key === 'Escape' && (isEditField || isEditSelect)) {
+      editingItemId = null;
+      renderShop();
+    }
+  });
+
+  $('shopForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const nameEl = $('shopName'), memoEl = $('shopMemo'), urlEl = $('shopUrl');
+    const name = nameEl.value.trim();
+    if (!name) { nameEl.focus(); return; }
+    let url = urlEl.value.trim();
+    if (url) {
+      url = /^https?:\/\//i.test(url) ? url : 'https://' + url.replace(/^\/+/, '');
+      if (!/^https?:\/\/[^\s.]+\.[^\s]+/i.test(url)) {
+        showToast('쿠팡 링크 주소 형식을 확인해 주세요.');
+        urlEl.focus();
+        return;
+      }
+    }
+    state.list.unshift({
+      id: uid('l'), name: name, memo: memoEl.value.trim(),
+      cat: normShopCat(elShopCat.value), url: url, fav: false, qty: 1, checked: false
+    });
+    nameEl.value = ''; memoEl.value = ''; urlEl.value = '';
+    activeShopCat = '전체';
+    save(); renderShop(); renderCta(); renderBadge();
+    showToast('자주 사는 품목에 추가했어요.');
+    nameEl.focus();
+  });
+
+  /* ─────────── 장바구니 이벤트 ─────────── */
+  elToCartBtn.addEventListener('click', moveCheckedToCart);
+
+  elCartList.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const card = btn.closest('[data-id]');
+    if (!card) return;
+    const id = card.getAttribute('data-id');
+    const idx = state.cart.findIndex(i => i.id === id);
+    if (idx < 0) return;
+    const it = state.cart[idx];
+    const action = btn.getAttribute('data-action');
+
+    if (action === 'qty-plus') {
+      it.qty = Math.min(99, it.qty + 1);
+      save(); renderCart(); renderCta();
+    } else if (action === 'qty-minus') {
+      if (it.qty <= 1) { showToast('수량은 1개부터예요.'); return; }
+      it.qty -= 1;
+      save(); renderCart(); renderCta();
+    } else if (action === 'del') {
+      const item = it;
+      state.cart.splice(idx, 1);
+      lastDeleted = { list: 'cart', item: item, index: idx };
+      save(); renderCart(); renderCta(); renderBadge();
+      showToast('장바구니에서 뺐어요.', () => {
+        if (!lastDeleted || lastDeleted.list !== 'cart') return;
+        state.cart.splice(Math.min(lastDeleted.index, state.cart.length), 0, lastDeleted.item);
+        lastDeleted = null;
+        save(); renderCart(); renderCta(); renderBadge();
+      });
+    }
+  });
+
+  $('cartClear').addEventListener('click', () => {
+    if (!state.cart.length) { showToast('장바구니가 이미 비어 있어요.'); return; }
+    const backup = state.cart.slice();
+    state.cart = [];
+    save(); renderCart(); renderCta(); renderBadge();
+    showToast('장바구니를 비웠어요.', () => {
+      state.cart = backup;
+      save(); renderCart(); renderCta(); renderBadge();
+    });
+  });
+
+  /* 주문 완료 후: 장바구니 품목 전부를 냉장고에 보유로 넣고 비우기
+     (선택) 총 결제 금액을 적으면 오늘 식비로 가계부에도 한 줄 남긴다. */
+  $('cartToFridge').addEventListener('click', () => {
+    if (!state.cart.length) { showToast('먼저 장바구니에 품목을 담아 주세요.'); return; }
+    const backup = state.cart.slice();
+    const fridgeBackup = state.fridge.map(f => ({ id: f.id, name: f.name, memo: f.memo, cat: f.cat, inStock: f.inStock }));
+
+    let pay = 0;
+    try {
+      if (typeof window.prompt === 'function') {
+        const raw = window.prompt('총 결제 금액을 적으면 가계부에도 기록해요.\n(비우거나 취소하면 기록 없이 냉장고로만 옮겨요)', '');
+        if (raw != null) pay = parseAmountText(raw);
+      }
+    } catch (err) { pay = 0; }
+
+    let newOnes = 0, backOnes = 0;
+    backup.forEach(it => {
+      const k = nameKey(it.name);
+      let hit = null;
+      for (let i = 0; i < state.fridge.length; i++) {
+        if (nameKey(state.fridge[i].name) === k) { hit = state.fridge[i]; break; }
+      }
+      if (hit) {
+        if (!hit.inStock) { hit.inStock = true; backOnes++; }
+        if (it.memo && !hit.memo) hit.memo = it.memo;
+        return;
+      }
+      state.fridge.unshift({
+        id: uid('f'), name: it.name, memo: it.memo || '',
+        cat: guessFridgeCat(it.name), inStock: true
+      });
+      newOnes++;
+    });
+    state.cart = [];
+    let ledgerRec = null;
+    if (pay > 0) {
+      /* 담은 품목 이름으로 품목군 추정 (가장 많은 품목군) */
+      const tally = {};
+      backup.forEach(it => { const c = guessLedgerCat(it.name); tally[c] = (tally[c] || 0) + 1; });
+      let ledgerCat = '', bestN = 0;
+      LEDGER_CATS.forEach(c => { if ((tally[c] || 0) > bestN) { ledgerCat = c; bestN = tally[c] || 0; } });
+      ledgerRec = addLedgerEntry(todayISO(),
+        backup[0].name + (backup.length > 1 ? ' 외 ' + (backup.length - 1) + '건' : ''), pay, ledgerCat);
+    }
+    save(); render();
+    showToast('냉장고에 ' + backup.length + '건 반영했어요.' + (newOnes ? ' 새로 ' + newOnes + '건' : '') +
+      (backOnes ? ' · 보유 전환 ' + backOnes + '건' : '') +
+      (ledgerRec ? ' · 가계부에 ' + fmtNum(ledgerRec.amount) + '원도 기록했어요' : ''), () => {
+      state.fridge = fridgeBackup;
+      state.cart = backup;
+      if (ledgerRec) state.ledger = state.ledger.filter(x => x.id !== ledgerRec.id);
+      save(); render();
+    });
+  });
+
+  /* ─────────── 메뉴 추천 이벤트 ─────────── */
+  elMenuChips.addEventListener('click', (e) => {
+    const b = e.target.closest('.chip');
+    if (!b) return;
+    activeMenuFilter = b.getAttribute('data-mfilter') || 'all';
+    editingRecipeId = null;
+    renderMenu();
+  });
+
+  /* 추천 레시피 카드 이벤트 */
+  elSuggestList.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const card = btn.closest('[data-bidx]');
+    if (!card) return;
+    const bi = parseInt(card.getAttribute('data-bidx'), 10);
+    const b = BUILTIN_RECIPES[bi];
+    if (!b) return;
+    const action = btn.getAttribute('data-action');
+    if (action === 'suggest-cart') {
+      addMissingToCart({ items: b.items });
+    } else if (action === 'suggest-save') {
+      saveSuggestionAsRecipe(b);
+    }
+  });
+
+  elMenuList.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const card = btn.closest('[data-id]');
+    if (!card) return;
+    const id = card.getAttribute('data-id');
+    const idx = state.recipes.findIndex(x => x.id === id);
+    if (idx < 0) return;
+    const r = state.recipes[idx];
+    const action = btn.getAttribute('data-action');
+
+    if (action === 'recipe-edit') {
+      editingRecipeId = id;
+      renderMenu();
+      const inp = elMenuList.querySelector('.recipe-card[data-id="' + cssEscape(id) + '"] .r-name');
+      if (inp) {
+        inp.focus();
+        try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (err) {}
+      }
+    } else if (action === 'recipe-cancel') {
+      editingRecipeId = null;
+      renderMenu();
+    } else if (action === 'recipe-save') {
+      saveRecipeEdit(card, r);
+    } else if (action === 'recipe-cart') {
+      addMissingToCart(r);
+    } else if (action === 'recipe-del') {
+      const item = r;
+      state.recipes.splice(idx, 1);
+      if (editingRecipeId === id) editingRecipeId = null;
+      lastDeleted = { list: 'recipe', item: item, index: idx };
+      save(); renderMenu();
+      showToast('레시피를 지웠어요.', () => {
+        if (!lastDeleted || lastDeleted.list !== 'recipe') return;
+        state.recipes.splice(Math.min(lastDeleted.index, state.recipes.length), 0, lastDeleted.item);
+        lastDeleted = null;
+        save(); renderMenu();
+      });
+    }
+  });
+
+  elMenuList.addEventListener('keydown', (e) => {
+    const t = e.target;
+    if (!t || !t.classList) return;
+    const isField = t.classList.contains('r-name') || t.classList.contains('r-items') || t.classList.contains('r-memo');
+    if (!isField) return;
+    const card = t.closest('[data-id]');
+    if (!card) return;
+    const r = state.recipes[state.recipes.findIndex(x => x.id === card.getAttribute('data-id'))];
+    if (!r) return;
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveRecipeEdit(card, r);
+    } else if (e.key === 'Escape') {
+      editingRecipeId = null;
+      renderMenu();
+    }
+  });
+
+  $('recipeForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const nameEl = $('recipeName'), itemsEl = $('recipeItems'), memoEl = $('recipeMemo');
+    const name = nameEl.value.trim();
+    if (!name) { nameEl.focus(); return; }
+    const items = parseIngredientText(itemsEl.value);
+    if (!items.length) {
+      showToast('필요 재료를 쉼표로 구분해 적어 주세요.');
+      itemsEl.focus();
+      return;
+    }
+    state.recipes.unshift({ id: uid('r'), name: name, items: items, memo: memoEl.value.trim() });
+    nameEl.value = ''; itemsEl.value = ''; memoEl.value = '';
+    activeMenuFilter = 'all';
+    save(); renderMenu();
+    showToast('레시피를 등록했어요.');
+    nameEl.focus();
+  });
+
+  /* ─────────── 주간 식단표 이벤트 ─────────── */
+  $('segCook').addEventListener('click', () => setMenuPane('cook'));
+  $('segPlan').addEventListener('click', () => setMenuPane('plan'));
+  elPlanAuto.addEventListener('click', generateWeeklyPlan);
+  elPlanReset.addEventListener('click', () => {
+    const plan = state.weeklyPlan || [];
+    let n = 0;
+    plan.forEach(p => { if (p && p.done) { p.done = false; n++; } });
+    if (!n) { showToast('아직 완료 체크한 날이 없어요.'); return; }
+    save(); renderPlan();
+    showToast('이번 주 완료 체크를 모두 풀었어요.');
+  });
+
+  elPlanList.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const card = btn.closest('[data-day]');
+    if (!card) return;
+    const d = parseInt(card.getAttribute('data-day'), 10);
+    if (isNaN(d) || !state.weeklyPlan || !state.weeklyPlan[d]) return;
+    const p = state.weeklyPlan[d];
+    const action = btn.getAttribute('data-action');
+
+    if (action === 'plan-done') {
+      p.done = !p.done;
+      save(); renderPlan();
+      showToast(p.done
+        ? PLAN_DAYS[d] + '요일 「' + p.name + '」' + josaEul(p.name) + ' 완료로 체크했어요.'
+        : PLAN_DAYS[d] + '요일 완료 체크를 풀었어요.');
+    } else if (action === 'plan-miss') {
+      addMissingToCart({ items: p.items || [] });
+      renderPlan();
+    } else if (action === 'plan-swap') {
+      swapPlanDay(d);
+    } else if (action === 'plan-edit') {
+      editingPlanDay = d;
+      renderPlan();
+      const inp = elPlanList.querySelector('.plan-card[data-day="' + d + '"] .plan-name-input');
+      if (inp) {
+        inp.focus();
+        try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (err) {}
+      }
+    } else if (action === 'plan-cancel') {
+      editingPlanDay = -1;
+      renderPlan();
+    } else if (action === 'plan-save') {
+      savePlanEdit(card, d);
+    }
+  });
+
+  elPlanList.addEventListener('keydown', (e) => {
+    const t = e.target;
+    if (!t || !t.classList || !t.classList.contains('plan-name-input')) return;
+    const card = t.closest('[data-day]');
+    if (!card) return;
+    const d = parseInt(card.getAttribute('data-day'), 10);
+    if (isNaN(d)) return;
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      savePlanEdit(card, d);
+    } else if (e.key === 'Escape') {
+      editingPlanDay = -1;
+      renderPlan();
+    }
+  });
+
+  /* ─────────── 📒 가계부 (식비) ─────────── */
+  const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
+
+  function ymd(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function todayISO() { return ymd(new Date()); }
+
+  /* 'YYYY-MM-DD' → Date (없거나 잘못된 날짜면 null) */
+  function parseISODate(s) {
+    const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(String(s == null ? '' : s).trim());
+    if (!m) return null;
+    const y = parseInt(m[1], 10), mo = parseInt(m[2], 10), da = parseInt(m[3], 10);
+    if (mo < 1 || mo > 12 || da < 1 || da > 31) return null;
+    const d = new Date(y, mo - 1, da);
+    if (d.getFullYear() !== y || d.getMonth() !== mo - 1 || d.getDate() !== da) return null;
+    return d;
+  }
+
+  function ymKey(y, m) { return y + '-' + pad2(m + 1); }
+  function curYM() { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() }; }
+  function viewYM() { if (!ledgerYM) ledgerYM = curYM(); return ledgerYM; }
+  function monthsInYear(y, m, delta) { const d = new Date(y, m + delta, 1); return { y: d.getFullYear(), m: d.getMonth() }; }
+  function daysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
+
+  /* 1,234,500 처럼 천 단위 쉼표 (음수는 부호 없이 절대값) */
+  function fmtNum(n) {
+    const v = Math.round(Math.abs(Number(n) || 0));
+    return String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  /* '34,200원' · '34200' · '₩34,200' → 34200 (못 읽으면 0) */
+  function parseAmountText(v) {
+    if (typeof v === 'number') return (isFinite(v) && v > 0) ? Math.min(99999999, Math.round(v)) : 0;
+    let t = String(v == null ? '' : v).replace(/\s/g, '');
+    if (!t) return 0;
+    t = t.replace(/[^\d.,]/g, '').replace(/,/g, '');
+    const n = parseFloat(t);
+    if (!isFinite(n) || n <= 0) return 0;
+    return Math.min(99999999, Math.round(n));
+  }
+
+  /* 월요일~일요일 주간 범위 (오늘이 속한 주) */
+  function weekBounds(base) {
+    const d = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+    const dow = d.getDay();
+    const back = (dow === 0 ? 6 : dow - 1);
+    const mon = new Date(d.getFullYear(), d.getMonth(), d.getDate() - back);
+    const sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
+    return { start: ymd(mon), end: ymd(sun), mon: mon, sun: sun };
+  }
+
+  function sumLedger(fromISO, toISO) {
+    let s = 0;
+    state.ledger.forEach(it => { if (it.date >= fromISO && it.date <= toISO) s += it.amount; });
+    return s;
+  }
+
+  function monthSum(y, m) {
+    const key = ymKey(y, m);
+    let s = 0;
+    state.ledger.forEach(it => { if (it.date.slice(0, 7) === key) s += it.amount; });
+    return s;
+  }
+
+  /* 보고 있는 달의 품목군별 합계 (전체 포함) */
+  function ledgerCatSums(selYm) {
+    const sums = { '전체': 0 };
+    LEDGER_CATS.forEach(c => { sums[c] = 0; });
+    state.ledger.forEach(it => {
+      if (it.date.slice(0, 7) !== selYm) return;
+      sums['전체'] += it.amount;
+      const c = normLedgerCat(it.cat, it.desc);
+      sums[c] = (sums[c] || 0) + it.amount;
+    });
+    return sums;
+  }
+
+  /* 품목군 필터 칩 — 품목군 이름만 (금액은 아래 「카테고리별 식비 비율」 카드에서) */
+  function renderLedgerCatChips() {
+    if (!elLgChips) return;
+    elLgChips.innerHTML = ['전체'].concat(LEDGER_CATS).map(c => {
+      const on = ledgerCatFilter === c;
+      return '<button type="button" class="chip' + (on ? ' on' : '') + '" data-lcat="' + esc(c) + '" aria-pressed="' + on + '">' +
+        esc(c) + '</button>';
+    }).join('');
+  }
+
+  /* 품목군별 비율 — 내림 후 남은 %를 소수부가 큰 항목부터 배분해 합계가 꼭 100%가 되게 한다 */
+  function ledgerCatRatios(sums) {
+    const total = sums['전체'] || 0;
+    const raw = LEDGER_CATS.map(c => ({ cat: c, amt: sums[c] || 0 }));
+    if (!(total > 0)) {
+      return { total: 0, rows: raw.map(x => ({ cat: x.cat, amt: 0, pct: 0 })) };
+    }
+    const exact = raw.map(x => x.amt / total * 100);
+    const pct = exact.map(n => Math.floor(n));
+    let rest = 100 - pct.reduce((s, n) => s + n, 0);
+    const order = exact.map((n, i) => ({ i: i, frac: n - Math.floor(n) }))
+      .sort((a, b) => (b.frac - a.frac) || (a.i - b.i));
+    for (let k = 0; k < rest && k < order.length; k++) pct[order[k].i] += 1;
+    return { total: total, rows: raw.map((x, i) => ({ cat: x.cat, amt: x.amt, pct: pct[i] })) };
+  }
+
+  /* 📊 카테고리별 식비 비율 카드 — 필터와 상관없이 그 달 전체 식비 기준 */
+  function renderLedgerRatio(v, selYm, sums) {
+    if (!elLgRatioList) return;
+    const r = ledgerCatRatios(sums);
+    const now = new Date();
+    const isCur = selYm === ymKey(now.getFullYear(), now.getMonth());
+    if (elLgRatioTotal) {
+      elLgRatioTotal.textContent = r.total > 0
+        ? (v.m + 1) + '월 · 총 ' + fmtNum(r.total) + '원'
+        : (v.m + 1) + '월 · 기록 없음';
+    }
+    if (!(r.total > 0)) {
+      elLgRatioList.innerHTML =
+        '<div class="lg-ratio-empty">' +
+          (isCur ? '이번 달 지출 내역이 아직 없어요' : (v.m + 1) + '월 지출 내역이 아직 없어요') +
+          '<span class="lg-ratio-empty-sub">지출을 기록하면 품목군별 비율이 여기에 보여요.</span>' +
+        '</div>';
+      return;
+    }
+    elLgRatioList.innerHTML = r.rows.map((x, i) => {
+      const label = esc(x.cat) + ' ' + x.pct + '% · ' + fmtNum(x.amt) + '원';
+      return '<div class="lg-ratio-row" data-rcat="' + esc(x.cat) + '">' +
+        '<div class="lg-ratio-top">' +
+          '<span class="lg-ratio-name">' + esc(x.cat) + '</span>' +
+          '<span class="lg-ratio-num"><b class="pct">' + x.pct + '%</b><span class="sep" aria-hidden="true">·</span><span class="amt">' + fmtNum(x.amt) + '원</span></span>' +
+        '</div>' +
+        '<div class="lg-ratio-track" role="img" aria-label="' + label + '">' +
+          '<div class="lg-ratio-bar c' + (i + 1) + (x.pct > 0 ? ' nz' : '') + '" style="width:' + x.pct + '%"></div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function renderLedger() {
+    if (!elLgSummary) return;
+    const v = viewYM();
+    const now = new Date();
+    const todayKey = ymd(now);
+    const thisYm = ymKey(now.getFullYear(), now.getMonth());
+    const selYm = ymKey(v.y, v.m);
+    const isCur = selYm === thisYm;
+
+    if (elLgMonthLabel) elLgMonthLabel.textContent = v.y + '년 ' + (v.m + 1) + '월';
+    if (elLgNext) elLgNext.disabled = isCur || (v.y > now.getFullYear()) || (v.y === now.getFullYear() && v.m > now.getMonth());
+
+    /* ① 이번 주(월~일) ② 보고 있는 달 ③ 전월 대비
+       - 지금 보고 있는 달이 이번 달이면 「1일~오늘」까지로 계산한다(진행 중인 달).
+       - 지난 달을 보고 있으면 그 달 전체로 계산한다. */
+    const wk = weekBounds(now);
+    const weekSum = sumLedger(wk.start, wk.end);
+    const monthAll = isCur ? sumLedger(selYm + '-01', todayKey) : monthSum(v.y, v.m);
+
+    const prev = monthsInYear(v.y, v.m, -1);
+    const prevYm = ymKey(prev.y, prev.m);
+    let curCmp = monthAll, prevCmp = monthSum(prev.y, prev.m), cmpFrom = '';
+    if (isCur) {
+      const dayN = now.getDate();
+      const prevLast = daysInMonth(prev.y, prev.m);
+      const cut = Math.min(dayN, prevLast);
+      curCmp = sumLedger(selYm + '-01', todayKey);
+      prevCmp = sumLedger(prevYm + '-01', prevYm + '-' + pad2(cut));
+      cmpFrom = '지난달 같은 기간(' + (prev.m + 1) + '/1~' + (prev.m + 1) + '/' + cut + ') ';
+    } else {
+      cmpFrom = '지난달(' + (prev.m + 1) + '월) ';
+    }
+
+    const delta = prevCmp - curCmp;   /* +면 절약, -면 더 쓴 것 */
+    let deltaValue, deltaSub, deltaCls = '';
+    if (!(prevCmp > 0)) {
+      deltaValue = '–';
+      deltaSub = '지난달 기록 없음';
+    } else if (delta > 0) {
+      deltaValue = fmtNum(delta) + '<span class="unit">원</span>';
+      deltaSub = '절약!';
+      deltaCls = ' save';
+    } else if (delta < 0) {
+      deltaValue = '+' + fmtNum(delta) + '<span class="unit">원</span>';
+      deltaSub = '더 사용';
+      deltaCls = ' spend';
+    } else {
+      deltaValue = '0<span class="unit">원</span>';
+      deltaSub = '지난달과 같아요';
+    }
+
+    const weekRange = (wk.mon.getMonth() + 1) + '/' + wk.mon.getDate() + '~' + (wk.sun.getMonth() + 1) + '/' + wk.sun.getDate();
+    elLgSummary.innerHTML =
+      '<div class="lg-item">' +
+        '<div class="lg-label">이번 주 식비</div>' +
+        '<div class="lg-value">' + fmtNum(weekSum) + '<span class="unit">원</span></div>' +
+        '<div class="lg-sub">' + weekRange + '</div>' +
+      '</div>' +
+      '<div class="lg-item">' +
+        '<div class="lg-label">' + (isCur ? '이번 달 식비' : (v.m + 1) + '월 식비') + '</div>' +
+        '<div class="lg-value">' + fmtNum(monthAll) + '<span class="unit">원</span></div>' +
+        '<div class="lg-sub">' + (isCur ? '1~' + now.getDate() + '일' : '1~' + daysInMonth(v.y, v.m) + '일') + '</div>' +
+      '</div>' +
+      '<div class="lg-item">' +
+        '<div class="lg-label">전월 대비</div>' +
+        '<div class="lg-value">' + deltaValue + '</div>' +
+        '<div class="lg-sub' + deltaCls + '">' + deltaSub + '</div>' +
+      '</div>';
+
+    if (elLgNote) {
+      elLgNote.textContent = prevCmp > 0
+        ? cmpFrom + fmtNum(prevCmp) + '원과 비교했어요.'
+        : '지난달 기록이 없어 아직 비교할 수 없어요.';
+    }
+
+    /* 품목군 필터 칩 (이름만) + 📊 카테고리별 식비 비율 (보고 있는 달 전체 기준) */
+    renderLedgerCatChips();
+    renderLedgerRatio(v, selYm, ledgerCatSums(selYm));
+
+    /* 이 달 지출 내역 (최신 날짜 먼저, 같은 날은 나중에 적은 것 먼저) */
+    const rows = [];
+    state.ledger.forEach((it, i) => {
+      if (it.date.slice(0, 7) !== selYm) return;
+      if (ledgerCatFilter !== '전체' && normLedgerCat(it.cat, it.desc) !== ledgerCatFilter) return;
+      rows.push({ it: it, i: i });
+    });
+    rows.sort((a, b) => {
+      if (a.it.date !== b.it.date) return a.it.date < b.it.date ? 1 : -1;
+      return b.i - a.i;
+    });
+
+    const total = rows.reduce((s, x) => s + x.it.amount, 0);
+    if (elLgCount) {
+      const catTag = ledgerCatFilter === '전체' ? '' : '<b>' + esc(ledgerCatFilter) + '</b> ';
+      elLgCount.innerHTML = (v.m + 1) + '월 ' + catTag + '지출 <b>' + rows.length + '</b>건' +
+        (rows.length ? ' · 합계 <b>' + fmtNum(total) + '원</b>' : '');
+    }
+
+    if (!rows.length) {
+      elLgList.innerHTML = '<div class="empty">' + (ledgerCatFilter === '전체'
+        ? (v.m + 1) + '월에 기록한 식비가 없어요.<br>아래에서 추가하거나 📥 주문 내역을 붙여넣어 보세요.'
+        : (v.m + 1) + '월에 「' + esc(ledgerCatFilter) + '」 기록이 없어요.<br>다른 품목군을 골라 보세요.') + '</div>';
+      return;
+    }
+
+    elLgList.innerHTML = rows.map(x => {
+      const it = x.it;
+      const cat = normLedgerCat(it.cat, it.desc);
+
+      /* ── ✎ 인라인 수정 모드 ── */
+      if (editingLedgerId === it.id) {
+        return '<div class="card ledger-card is-editing" data-id="' + esc(it.id) + '">' +
+          '<div class="lg-main">' +
+            '<div class="item-editor lg-editor">' +
+              '<div class="edit-row">' +
+                '<span class="edit-label">날짜</span>' +
+                '<input class="edit-date" type="date" value="' + esc(it.date) + '" aria-label="날짜">' +
+              '</div>' +
+              '<div class="edit-row">' +
+                '<span class="edit-label">품목군</span>' +
+                '<select class="edit-cat" aria-label="품목군">' + lgCatOptions(cat) + '</select>' +
+              '</div>' +
+              '<div class="edit-row">' +
+                '<span class="edit-label">내용</span>' +
+                '<input class="edit-desc" type="text" maxlength="60" value="' + esc(it.desc) + '" placeholder="내용" aria-label="내용">' +
+              '</div>' +
+              '<div class="edit-row">' +
+                '<span class="edit-label">금액</span>' +
+                '<input class="edit-amount" type="number" inputmode="numeric" min="1" step="1" value="' + it.amount + '" placeholder="금액 (원)" aria-label="금액">' +
+              '</div>' +
+              '<div class="edit-actions">' +
+                '<button type="button" class="save" data-action="edit-save">저장</button>' +
+                '<button type="button" class="cancel" data-action="edit-cancel">취소</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }
+
+      const d = parseISODate(it.date);
+      const dLabel = d ? (d.getMonth() + 1) + '/' + d.getDate() + ' (' + WEEKDAY[d.getDay()] + ')' : it.date;
+      return '<div class="card ledger-card" data-id="' + esc(it.id) + '">' +
+        '<div class="lg-main">' +
+          '<div class="lg-top"><span class="lg-date">' + dLabel + '</span>' +
+            '<span class="lg-cat">' + esc(cat) + '</span></div>' +
+          '<div class="lg-desc">' + esc(it.desc) + '</div>' +
+        '</div>' +
+        '<div class="lg-amt">' + fmtNum(it.amount) + '<span class="unit">원</span></div>' +
+        '<button type="button" class="lg-edit-btn" data-action="edit" aria-label="' + esc(it.desc) + ' 수정">✎</button>' +
+        '<button type="button" class="del-btn" data-action="del" aria-label="' + esc(it.desc) + ' 삭제">×</button>' +
+      '</div>';
+    }).join('');
+
+    /* 수정 카드의 품목군 select 값 맞추기 (옵션 삽입 후) */
+    if (editingLedgerId) {
+      const editCard = elLgList.querySelector('.ledger-card.is-editing');
+      const catSel = editCard ? editCard.querySelector('.edit-cat') : null;
+      const target = state.ledger.find(i => i.id === editingLedgerId);
+      if (catSel && target) catSel.value = normLedgerCat(target.cat, target.desc);
+    }
+  }
+
+  /* 가계부 수정 폼의 품목군 옵션 (3분류) */
+  function lgCatOptions(sel) {
+    return LEDGER_CATS.map(c =>
+      '<option value="' + esc(c) + '"' + (c === sel ? ' selected' : '') + '>' + esc(c) + '</option>'
+    ).join('');
+  }
+
+  /* ✎ 인라인 수정 저장 — 날짜·품목군·내용·금액을 고친 뒤 요약·목록·비율을 즉시 다시 그린다 */
+  function saveLedgerEdit(card, it) {
+    if (!card || !it) return;
+    const dateInp = card.querySelector('.edit-date');
+    const catSel = card.querySelector('.edit-cat');
+    const descInp = card.querySelector('.edit-desc');
+    const amtInp = card.querySelector('.edit-amount');
+
+    const desc = String(descInp ? descInp.value : '').trim();
+    if (!desc) {
+      showToast('내용을 비울 수 없어요.');
+      if (descInp) { try { descInp.focus(); } catch (err) {} }
+      return;
+    }
+    const rawAmt = String(amtInp ? amtInp.value : '').trim();
+    const amt = parseAmountText(rawAmt);
+    if (!(amt > 0) || rawAmt.charAt(0) === '-') {
+      showToast('금액을 숫자로 적어 주세요.');
+      if (amtInp) { try { amtInp.focus(); } catch (err) {} }
+      return;
+    }
+    const d = parseISODate(dateInp ? dateInp.value : '');
+    const dateISO = d ? ymd(d) : it.date;   /* 날짜를 비우면 원래 날짜 그대로 둔다 */
+    const catVal = (catSel && LEDGER_CATS.indexOf(String(catSel.value)) >= 0)
+      ? String(catSel.value) : normLedgerCat(it.cat, desc);
+
+    it.date = dateISO;
+    it.desc = desc.slice(0, 60);
+    it.amount = amt;
+    it.cat = catVal;
+    editingLedgerId = null;
+    save();
+    renderLedger();
+
+    const v = viewYM();
+    if (dateISO.slice(0, 7) !== ymKey(v.y, v.m)) {
+      showToast('식비 기록을 수정했어요. · ' + parseInt(dateISO.slice(5, 7), 10) + '월 내역으로 옮겼어요');
+    } else {
+      showToast('식비 기록을 수정했어요.');
+    }
+  }
+
+  function shiftLedgerMonth(delta) {
+    const v = viewYM();
+    ledgerYM = monthsInYear(v.y, v.m, delta);
+    editingLedgerId = null;
+    renderLedger();
+  }
+
+  function addLedgerEntry(dateISO, desc, amount, cat) {
+    const d = parseISODate(dateISO) || new Date();
+    const amt = parseAmountText(amount);
+    if (!(amt > 0)) return null;
+    const text = String(desc == null ? '' : desc).trim().slice(0, 60) || '지출';
+    const rec = {
+      id: uid('g'), date: ymd(d), desc: text, amount: amt,
+      cat: normLedgerCat(cat, text)
+    };
+    state.ledger.push(rec);
+    ledgerYM = { y: d.getFullYear(), m: d.getMonth() };
+    return rec;
+  }
+
+  /* ── 주문 내역 붙여넣기 파싱 ──
+     기본은 '날짜 | 내용 | 금액' 3단. 4단('날짜 | 구매처 | 내용 | 금액')이 와도
+     구매처는 쓰지 않고 날짜·내용·금액만 골라낸다. */
+  const LG_KNOWN_STORES = ['쿠팡', '로켓프레시', '쿠팡이츠', '동네마트', '이마트', '홈플러스', '코스트코', '트레이더스', '노브랜드', '배달'];
+
+  function dateToken(tok) {
+    const t = String(tok == null ? '' : tok).trim();
+    if (!t) return '';
+    let m = /^(\d{4})\s*[-./년]\s*(\d{1,2})\s*[-./월]\s*(\d{1,2})\s*일?$/.exec(t);
+    if (m) {
+      const d = parseISODate(m[1] + '-' + pad2(parseInt(m[2], 10)) + '-' + pad2(parseInt(m[3], 10)));
+      return d ? ymd(d) : '';
+    }
+    m = /^(\d{1,2})\s*[-./월]\s*(\d{1,2})\s*일?$/.exec(t);
+    if (m) {
+      const y = viewYM().y;
+      const d = parseISODate(y + '-' + pad2(parseInt(m[1], 10)) + '-' + pad2(parseInt(m[2], 10)));
+      return d ? ymd(d) : '';
+    }
+    return '';
+  }
+
+  /* 줄 앞머리의 날짜 떼어내기 */
+  function stripDateHead(s) {
+    let m = /^(\d{4})\s*[-./년]\s*(\d{1,2})\s*[-./월]\s*(\d{1,2})\s*일?(?=$|[\s|,·)\]-])/.exec(s);
+    if (m) {
+      const d = parseISODate(m[1] + '-' + pad2(parseInt(m[2], 10)) + '-' + pad2(parseInt(m[3], 10)));
+      if (d) return { date: ymd(d), rest: s.slice(m[0].length) };
+    }
+    m = /^(\d{1,2})\s*[-./월]\s*(\d{1,2})\s*일?(?=$|[\s|,·)\]-])/.exec(s);
+    if (m) {
+      const y = viewYM().y;
+      const d = parseISODate(y + '-' + pad2(parseInt(m[1], 10)) + '-' + pad2(parseInt(m[2], 10)));
+      if (d) return { date: ymd(d), rest: s.slice(m[0].length) };
+    }
+    return null;
+  }
+
+  /* 줄 끝의 금액 떼어내기 — 단위(원·₩)가 붙었거나 3자리 이상 숫자만 금액으로 본다.
+     ('두부 2팩' 처럼 내용 끝의 작은 숫자를 금액으로 잘못 읽지 않도록) */
+  function stripAmountTail(s) {
+    const m = /(?:[₩￦]|\s|^)(\d[\d,]{0,12})\s*(원)?\s*$/.exec(s);
+    if (!m) return null;
+    const digits = m[1].replace(/,/g, '');
+    if (!m[2] && m[1].charAt(0) === '0') return null;
+    if (!m[2] && digits.length < 3) return null;
+    const n = parseAmountText(m[1]);
+    if (!(n > 0)) return null;
+    return { amount: n, rest: s.slice(0, m.index) };
+  }
+
+  function parseLedgerLine(line) {
+    let s = String(line == null ? '' : line).replace(/\t/g, ' ').trim();
+    if (!s) return null;
+    if (/^[-─━=*_~]{3,}$/.test(s)) return null;      /* 구분선 */
+    if (/^됴니/.test(s)) return null;                 /* 인사말 */
+    if (/^https?:\/\//i.test(s)) return null;         /* 링크 줄 */
+    s = s.replace(/^[-*•·‣◦]\s*/, '').replace(/^\d{1,2}[.)]\s*/, '').trim();
+    if (!s) return null;
+
+    /* ① 구분자(| ｜)로 나뉜 줄: 앞은 날짜, 끝은 금액.
+       · '날짜 | 품목군 | 내용 | 금액'이면 품목군을 살리고 내용은 품목군 다음 칸.
+       · '날짜 | 구매처 | 내용 | 금액'이면 구매처는 버린다 (품목군 이름이 아니면 구매처로 본다). */
+    if (/[|｜]/.test(s)) {
+      const f = s.split(/\s*[|｜]\s*/).map(t => t.trim()).filter(t => t !== '');
+      if (f.length >= 3) {
+        const date = dateToken(f[0]);
+        const amount = parseAmountText(f[f.length - 1]);
+        if (!date || !(amount > 0)) return null;
+        const mid = f.slice(1, f.length - 1);
+        let cat = '';
+        if (mid.length >= 2) {
+          cat = ledgerCatToken(mid[0]);
+          if (cat) mid.shift();
+        }
+        const desc = mid.length ? mid[mid.length - 1] : '';
+        return { date: date, desc: desc || '지출', amount: amount, cat: cat || guessLedgerCat(desc) };
+      }
+    }
+
+    /* ② 자동 인식: 앞의 날짜 · 뒤의 금액 · 가운데는 내용 */
+    let date = '';
+    const dh = stripDateHead(s);
+    if (dh) { date = dh.date; s = dh.rest; }
+    let amount = 0;
+    const at = stripAmountTail(s);
+    if (at) { amount = at.amount; s = at.rest; }
+    if (!date || !(amount > 0)) return null;
+    let desc = s.replace(/^[\s|,·:\-–]+/, '').replace(/[\s|,·:\-–]+$/, '').trim();
+    /* 내용 앞에 붙은 구매처 이름은 지운다 (예: '쿠팡 닭다리살 외 4건') */
+    for (let i = 0; i < LG_KNOWN_STORES.length; i++) {
+      const k = LG_KNOWN_STORES[i];
+      if (desc.length > k.length && desc.indexOf(k) === 0) { desc = desc.slice(k.length).replace(/^[\s,·:\-]+/, '').trim(); break; }
+    }
+    return { date: date, desc: desc || '지출', amount: amount, cat: guessLedgerCat(desc) };
+  }
+
+  function ledgerDupKey(r) {
+    return r.date + '|' + String(r.desc == null ? '' : r.desc).replace(/\s+/g, '').toLowerCase() + '|' + Math.round(r.amount);
+  }
+
+  /* ─────────── 가계부 → 냉장고 재고 연동 ─────────── */
+
+  /* 「냉장고 재고에도 반영」 체크 상태 (기본 켜짐) */
+  function lgPasteSyncOn() {
+    if (!elLgPasteFridge) return true;
+    return !!elLgPasteFridge.checked;
+  }
+
+  /* 가계부 「내용」에서 냉장고에 담을 품목명만 골라 낸다.
+     · '닭다리살 · 새우살' → ['닭다리살','새우살'] (· 또는 , 로 나눔)
+     · '곰곰 닭다리살 외 2건' → ['곰곰 닭다리살'] (「외 N건」 꼬리표는 품목이 아니다)
+     · '지출'이나 결제처 이름처럼 품목이 아닌 말은 건너뛴다. */
+  function parseFridgeItems(desc) {
+    const out = [], seen = {};
+    String(desc == null ? '' : desc).split(/[·,，、]+/).forEach(part => {
+      const nm = part.replace(/\s*외\s*\d+\s*건\s*$/, '').replace(/^[\s\-–]+/, '').replace(/[\s\-–]+$/, '').trim();
+      if (!nm) return;
+      if (nm === '지출' || LG_KNOWN_STORES.indexOf(nm) >= 0) return;
+      const k = nameKey(nm);
+      if (!k || seen[k]) return;
+      seen[k] = true;
+      out.push(nm);
+    });
+    return out;
+  }
+
+  /* 가계부 품목군 → 냉장고 카테고리.
+     '소스·간편·음료'는 냉장고에서 둘로 나뉘므로 품목명 키워드로 고른다. */
+  function fridgeCatFromLedger(cat, name) {
+    const k = normLedgerCat(cat, name);
+    if (k === '육류·수산·계란' || k === '채소·두부·버섯') return k;
+    return guessFridgeCat(name) === '소스·양념' ? '소스·양념' : '간편·면·음료';
+  }
+
+  /* 가계부에 기록한 내역을 냉장고 재고에도 반영한다.
+     · 냉장고에 없는 품목 → '보유'로 새로 넣기
+     · '소진'해 둔 품목 → '보유'로 되돌리기
+     · 이미 '보유'인 품목 → 그대로 (중복 추가 없음)
+     되돌리기를 위해 이번에 바꾼 id와 건수를 돌려준다. */
+  function reflectLedgerInFridge(rows) {
+    const added = [], back = [], fresh = [], byKey = {};
+    state.fridge.forEach(it => {
+      const k = nameKey(it.name);
+      if (byKey[k] == null) byKey[k] = it;
+    });
+    rows.forEach(row => {
+      const cat = normLedgerCat(row.cat, row.desc);
+      parseFridgeItems(row.desc).forEach(nm => {
+        const k = nameKey(nm);
+        const hit = byKey[k];
+        if (hit) {
+          if (!hit.inStock) { hit.inStock = true; back.push(hit.id); }
+          return;
+        }
+        const it = { id: uid('f'), name: nm, memo: '', cat: fridgeCatFromLedger(cat, nm), inStock: true };
+        byKey[k] = it;
+        fresh.push(it);
+        added.push(it.id);
+      });
+    });
+    if (fresh.length) state.fridge = fresh.concat(state.fridge);
+    return { count: added.length + back.length, added: added, back: back };
+  }
+
+  /* 붙여넣기 되돌리기 → 냉장고도 이번에 바꾼 것만 되돌린다 */
+  function undoFridgeReflect(ch) {
+    if (!ch || !ch.count) return;
+    if (ch.added.length) state.fridge = state.fridge.filter(it => ch.added.indexOf(it.id) < 0);
+    ch.back.forEach(id => {
+      const it = state.fridge.filter(x => x.id === id)[0];
+      if (it) it.inStock = false;
+    });
+  }
+
+  /* 붙여넣은 내역을 가계부에 기록한다.
+     syncFridge(기본 켜짐)면 새로 기록한 건의 품목을 냉장고 재고에도 반영한다. */
+  function importLedgerFromPaste(text, syncFridge) {
+    const lines = String(text == null ? '' : text).split(/\r?\n/);
+    const rows = [];
+    let bad = 0;
+    lines.forEach(raw => {
+      if (!String(raw).trim()) return;
+      const row = parseLedgerLine(raw);
+      if (!row) { bad++; return; }
+      rows.push(row);
+    });
+    if (!rows.length) {
+      showToast('읽을 수 있는 주문 내역이 없어요. 한 줄에 「날짜 | 내용 | 금액」로 붙여넣어 주세요.');
+      return false;
+    }
+
+    const seen = {};
+    state.ledger.forEach(it => { seen[ledgerDupKey(it)] = true; });
+    const added = [];
+    let dup = 0;
+    rows.forEach(row => {
+      const k = ledgerDupKey(row);
+      if (seen[k]) { dup++; return; }
+      seen[k] = true;
+      state.ledger.push({ id: uid('g'), date: row.date, desc: row.desc, amount: row.amount,
+        cat: normLedgerCat(row.cat, row.desc) });
+      added.push(state.ledger[state.ledger.length - 1]);
+    });
+
+    if (added.length) {
+      let latest = added[0].date;
+      added.forEach(r => { if (r.date > latest) latest = r.date; });
+      const d = parseISODate(latest);
+      if (d) ledgerYM = { y: d.getFullYear(), m: d.getMonth() };
+    }
+
+    /* 냉장고 재고 반영 (체크 꺼져 있으면 가계부에만 기록) */
+    let reflected = null;
+    if (syncFridge && added.length) {
+      reflected = reflectLedgerInFridge(added);
+      if (reflected.count) {
+        activeCat = '전체';
+        query = '';
+        elSearch.value = '';
+        elSearchBox.classList.remove('has-text');
+        renderFridge();
+        renderMenu();
+      }
+    }
+    save(); renderLedger();
+
+    if (!added.length) {
+      showToast('이미 가계부에 있는 내역이에요' + (dup ? ' (중복 ' + dup + '건)' : '') + (bad ? ' · 읽지 못한 줄 ' + bad : ''));
+      return false;
+    }
+
+    const ids = added.map(r => r.id);
+    showToast(added.length + '건 기록했어요' +
+      (reflected && reflected.count ? ' · 냉장고 ' + reflected.count + '종 반영' : '') +
+      (dup ? ' · 중복 ' + dup + '건은 건너뛰었어요' : '') +
+      (bad ? ' · 읽지 못한 줄 ' + bad : ''), () => {
+      state.ledger = state.ledger.filter(it => ids.indexOf(it.id) < 0);
+      undoFridgeReflect(reflected);
+      save(); renderLedger(); renderFridge(); renderMenu();
+    });
+    return true;
+  }
+
+  /* 됴니에게 쿠팡 주문내역(식품만) 정리를 부탁하는 문구 */
+  function buildLedgerRequestText() {
+    const v = viewYM();
+    const ym = ymKey(v.y, v.m);
+    return [
+      '됴니야, 내 쿠팡 주문내역에서 ' + v.y + '년 ' + (v.m + 1) + '월 식품 주문만 골라서 아래 형식으로 정리해 줘.',
+      '(생필품·생활용품은 빼고 먹는 것만)',
+      '',
+      '날짜 | 품목군 | 내용 | 금액',
+      '(품목군은 육류·수산·계란 / 채소·두부·버섯 / 소스·간편·음료 중 하나)',
+      '예) ' + ym + '-14 | 채소·두부·버섯 | 새송이버섯 | 2580',
+      '예) ' + ym + '-15 | 육류·수산·계란 | 닭다리살 · 새우살 | 34200',
+      '',
+      '무게·개수 단위(kg, g, 개수)는 빼고 품목명만 적어 줘.',
+      '금액은 실제 결제 금액으로, 여러 품목이면 「닭다리살 · 새우살」처럼 품목명만 · 로 이어서 적어 줘.'
+    ].join('\n');
+  }
+
+  async function copyLedgerRequest() {
+    const text = buildLedgerRequestText();
+    let ok = false;
+    if (navigator.clipboard && window.isSecureContext) {
+      try { await navigator.clipboard.writeText(text); ok = true; } catch (e) { ok = false; }
+    }
+    if (!ok) ok = legacyCopy(text);
+    if (ok) showToast('복사했어요. 됴니에게 붙여 주세요!');
+    else openModal(text, '주문내역 정리 요청 문구');
+  }
+
+  /* ── 가계부 이벤트 ── */
+  if (elLgDate) elLgDate.value = todayISO();
+  elLgPrev.addEventListener('click', () => shiftLedgerMonth(-1));
+  elLgNext.addEventListener('click', () => shiftLedgerMonth(1));
+  $('lgAskBtn').addEventListener('click', copyLedgerRequest);
+
+  $('ledgerForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const amt = parseAmountText(elLgAmount.value);
+    if (!(amt > 0)) {
+      showToast('금액을 숫자로 적어 주세요.');
+      try { elLgAmount.focus(); } catch (err) {}
+      return;
+    }
+    const rec = addLedgerEntry(elLgDate.value, elLgDesc.value, amt,
+      String(elLgDesc.value || '').trim() ? elLgCat.value : '');
+    if (!rec) { showToast('금액을 숫자로 적어 주세요.'); return; }
+    elLgAmount.value = '';
+    elLgDesc.value = '';
+    lgCatTouched = false;
+    elLgCat.value = LEDGER_CATS[0];
+    save(); renderLedger();
+    showToast(fmtNum(rec.amount) + '원 식비를 기록했어요. · ' + rec.cat);
+    try { elLgDesc.focus(); } catch (err) {}
+  });
+
+  /* 내용을 적으면 품목군을 키워드로 자동 선택 (손으로 고른 뒤에는 그대로 둔다) */
+  elLgDesc.addEventListener('input', () => {
+    if (lgCatTouched) return;
+    const text = String(elLgDesc.value || '').trim();
+    if (!text) return;
+    const c = guessLedgerCat(text);
+    if (c) elLgCat.value = c;
+  });
+  if (elLgCat) elLgCat.addEventListener('change', () => { lgCatTouched = true; });
+
+  /* 품목군 칩 → 그 품목군만 보기 */
+  if (elLgChips) elLgChips.addEventListener('click', (e) => {
+    const b = e.target.closest('.chip');
+    if (!b) return;
+    const c = b.getAttribute('data-lcat');
+    if (!c) return;
+    ledgerCatFilter = c;
+    editingLedgerId = null;
+    renderLedger();
+  });
+
+  elLgList.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const card = btn.closest('[data-id]');
+    if (!card) return;
+    const id = card.getAttribute('data-id');
+    const idx = state.ledger.findIndex(i => i.id === id);
+    if (idx < 0) return;
+    const action = btn.getAttribute('data-action');
+
+    /* ✎ 수정 모드 열기 */
+    if (action === 'edit') {
+      editingLedgerId = id;
+      renderLedger();
+      const inp = elLgList.querySelector('.ledger-card.is-editing .edit-desc');
+      if (inp) {
+        try { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); } catch (err) {}
+      }
+      return;
+    }
+    /* 취소: 아무것도 바꾸지 않고 닫기 */
+    if (action === 'edit-cancel') {
+      editingLedgerId = null;
+      renderLedger();
+      return;
+    }
+    /* 저장: 검증 후 반영 */
+    if (action === 'edit-save') {
+      saveLedgerEdit(card, state.ledger[idx]);
+      return;
+    }
+    if (action !== 'del') return;
+    const item = state.ledger[idx];
+    if (editingLedgerId === id) editingLedgerId = null;
+    state.ledger.splice(idx, 1);
+    lastDeleted = { list: 'ledger', item: item, index: idx };
+    save(); renderLedger();
+    showToast('식비 기록을 지웠어요.', () => {
+      if (!lastDeleted || lastDeleted.list !== 'ledger') return;
+      state.ledger.splice(Math.min(lastDeleted.index, state.ledger.length), 0, lastDeleted.item);
+      lastDeleted = null;
+      save(); renderLedger();
+    });
+  });
+
+  /* ✎ 수정 중 Enter = 저장, Esc = 취소 */
+  elLgList.addEventListener('keydown', (e) => {
+    const t = e.target;
+    if (!t || !t.classList || !editingLedgerId) return;
+    const cls = t.classList;
+    const inEditor = cls.contains('edit-date') || cls.contains('edit-cat') ||
+      cls.contains('edit-desc') || cls.contains('edit-amount');
+    if (!inEditor) return;
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const card = t.closest('[data-id]');
+      const saveBtn = card ? card.querySelector('[data-action="edit-save"]') : null;
+      if (saveBtn) saveBtn.click();
+    } else if (e.key === 'Escape') {
+      editingLedgerId = null;
+      renderLedger();
+    }
+  });
+
+  function setLgPasteOpen(open) {
+    elLgPastePanel.hidden = !open;
+    elLgPasteWrap.classList.toggle('open', open);
+    elLgPasteToggle.setAttribute('aria-expanded', String(open));
+    if (open) { try { elLgPasteText.focus(); } catch (e) {} }
+  }
+
+  elLgPasteToggle.addEventListener('click', () => setLgPasteOpen(elLgPastePanel.hidden));
+  $('lgPasteCancel').addEventListener('click', () => {
+    elLgPasteText.value = '';
+    setLgPasteOpen(false);
+  });
+  $('lgPasteSubmit').addEventListener('click', () => {
+    if (importLedgerFromPaste(elLgPasteText.value, lgPasteSyncOn())) {
+      elLgPasteText.value = '';
+      setLgPasteOpen(false);
+    }
+  });
+  elLgPasteText.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      $('lgPasteSubmit').click();
+    }
+  });
+
+  /* ─────────── 주문 문구 ─────────── */
+  function buildOrderText(items) {
+    const lines = ['됴니야, 아래 쿠팡 품목 주문해 줘!', ''];
+    items.forEach(it => {
+      lines.push('- ' + it.name + ' × ' + it.qty);
+      if (it.url) lines.push('  링크: ' + it.url);
+    });
+    lines.push('');
+    lines.push('총 ' + items.length + '건');
+    return lines.join('\n');
+  }
+
+  function legacyCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return !!ok;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function openModal(text, title) {
+    if (elModalTitle) elModalTitle.textContent = title || '주문 요청 문구';
+    elCopyText.value = text;
+    elModal.hidden = false;
+    setTimeout(() => { try { elCopyText.focus(); elCopyText.select(); } catch (e) {} }, 30);
+  }
+  function closeModal() { elModal.hidden = true; }
+
+  async function copyOrder() {
+    const items = state.cart.slice();
+    if (!items.length) {
+      showToast('장바구니가 비어 있어요. ⭐ 자주 사는 품목에서 먼저 담아 주세요.');
+      return;
+    }
+    const text = buildOrderText(items);
+    let ok = false;
+    if (navigator.clipboard && window.isSecureContext) {
+      try { await navigator.clipboard.writeText(text); ok = true; } catch (e) { ok = false; }
+    }
+    if (!ok) ok = legacyCopy(text);
+    if (ok) {
+      showToast('주문 문구를 복사했어요. 됴니에게 붙여 주세요!');
+    } else {
+      openModal(text);
+    }
+  }
+
+  elCopyBtn.addEventListener('click', copyOrder);
+
+  /* 현재 보유 재료로 메뉴 문의 문구 복사 */
+  function stockedNames() {
+    return state.fridge.filter(f => f.inStock).map(f => f.name);
+  }
+
+  function buildAskText() {
+    const lines = ['됴니야, 지금 냉장고에 이런 재료가 있는데 뭐 해 먹을까?'];
+    stockedNames().forEach(n => lines.push('- ' + n));
+    return lines.join('\n');
+  }
+
+  async function copyAskMenu() {
+    const names = stockedNames();
+    if (!names.length) {
+      showToast('냉장고에 보유 재료가 없어요. 품목을 보유로 표시해 주세요.');
+      return;
+    }
+    const text = buildAskText();
+    let ok = false;
+    if (navigator.clipboard && window.isSecureContext) {
+      try { await navigator.clipboard.writeText(text); ok = true; } catch (e) { ok = false; }
+    }
+    if (!ok) ok = legacyCopy(text);
+    if (ok) showToast('복사했어요. 됴니에게 붙여 주세요!');
+    else openModal(text, '메뉴 물어보기 문구');
+  }
+
+  elAskMenuBtn.addEventListener('click', copyAskMenu);
+
+  $('modalClose').addEventListener('click', closeModal);
+  elModal.addEventListener('click', (e) => { if (e.target === elModal) closeModal(); });
+  $('modalCopy').addEventListener('click', () => {
+    if (legacyCopy(elCopyText.value)) {
+      closeModal();
+      showToast('복사했어요! 됴니에게 붙여 주세요.');
+    } else {
+      try { elCopyText.focus(); elCopyText.select(); } catch (e) {}
+      showToast('문구를 길게 눌러 직접 복사해 주세요.');
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !elModal.hidden) closeModal();
+    else if (e.key === 'Escape' && !elBackupModal.hidden) closeBackupModal();
+  });
+
+  /* ─────────── 데이터 백업 · 복원 ─────────── */
+  const BACKUP_VERSION = 1;
+  const BACKUP_APP_ID = 'fridge-shop';
+
+  /* 현재 상태 전체(fridge·list·cart·recipes·weeklyPlan …)를 백업 JSON 문자열로
+     - localStorage 값과 같은 필드에 app/version/exportedAt 메타만 더한 평평한 구조
+     - 복원할 때는 이 구조든 { state: {...} } 구조든 모두 읽는다 */
+  function buildBackupJson() {
+    const payload = {
+      app: BACKUP_APP_ID,
+      appName: '우리집 식탁 · 냉장고 단골 장보기',
+      version: BACKUP_VERSION,
+      exportedAt: new Date().toISOString()
+    };
+    ['fridge', 'list', 'cart', 'recipes', 'weeklyPlan', 'ledger', 'tab', 'favFirst', 'catVersion',
+      'frequentAddedV2', 'fridgeCatVersion'].forEach(k => {
+      payload[k] = state[k];
+    });
+    return JSON.stringify(payload, null, 2);
+  }
+
+  function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+  /* 우리집식탁-백업-YYYY-MM-DD.json */
+  function backupFileName() {
+    const d = new Date();
+    return '우리집식탁-백업-' + d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + '.json';
+  }
+
+  /* 백업 코드 복사 (클립보드 불가 시 텍스트박스에 보여 주고 전체 선택) */
+  async function copyBackup() {
+    const text = buildBackupJson();
+    elBackupText.value = text;
+    let ok = false;
+    if (navigator.clipboard && window.isSecureContext) {
+      try { await navigator.clipboard.writeText(text); ok = true; } catch (e) { ok = false; }
+    }
+    if (!ok) ok = legacyCopy(text);
+    if (ok) {
+      showToast('백업 코드를 복사했어요. 안전한 곳에 보관해 주세요.');
+    } else {
+      try { elBackupText.focus(); elBackupText.select(); } catch (e) {}
+      showToast('복사가 안 되면 아래 백업 코드를 길게 눌러 복사해 주세요.');
+    }
+  }
+
+  /* .json 파일로 저장 (Blob 다운로드) */
+  function saveBackupFile() {
+    const text = buildBackupJson();
+    elBackupText.value = text;
+    const name = backupFileName();
+    try {
+      if (typeof Blob === 'undefined' || !document.createElement) throw new Error('no blob');
+      const blob = new Blob([text], { type: 'application/json;charset=utf-8' });
+      let url = '';
+      if (typeof URL !== 'undefined' && URL.createObjectURL) {
+        url = URL.createObjectURL(blob);
+      } else {
+        throw new Error('no objecturl');
+      }
+      const a = document.createElement('a');
+      a.setAttribute('download', name);
+      a.setAttribute('href', url);
+      a.href = url;
+      a.download = name;
+      a.style.display = 'none';
+      if (document.body) document.body.appendChild(a);
+      a.click();
+      if (a.parentNode) a.parentNode.removeChild(a);
+      if (URL.revokeObjectURL) setTimeout(function () { try { URL.revokeObjectURL(url); } catch (e) {} }, 1500);
+      showToast('백업 파일을 저장했어요. (' + name + ')');
+    } catch (e) {
+      try { elBackupText.focus(); elBackupText.select(); } catch (err) {}
+      showToast('이 화면에서는 파일 저장이 안 돼요. 백업 코드를 복사해 주세요.');
+    }
+  }
+
+  function openBackupModal() {
+    elBackupText.value = buildBackupJson();
+    elRestoreText.value = '';
+    elBackupModal.hidden = false;
+    setTimeout(() => { try { elBackupText.focus(); elBackupText.select(); } catch (e) {} }, 30);
+  }
+
+  function closeBackupModal() { elBackupModal.hidden = true; }
+
+  /* 붙여넣은 백업 텍스트 검증 → 정규화된 상태. 실패하면 이유만 돌려주고 기존 데이터는 그대로 */
+  function parseBackupText(text) {
+    const raw = String(text == null ? '' : text).trim();
+    if (!raw) return { ok: false, msg: '복원할 백업 코드를 먼저 붙여넣어 주세요.' };
+    let obj;
+    try {
+      obj = JSON.parse(raw);
+    } catch (e) {
+      return { ok: false, msg: '백업 코드가 올바른 JSON이 아니에요. 기존 데이터는 그대로예요.' };
+    }
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+      return { ok: false, msg: '백업 데이터를 알아볼 수 없어요. 기존 데이터는 그대로예요.' };
+    }
+    const src = (obj.state && typeof obj.state === 'object' && !Array.isArray(obj.state)) ? obj.state : obj;
+    if (!Array.isArray(src.fridge)) {
+      return { ok: false, msg: '냉장고(fridge) 목록이 없는 백업이에요. 기존 데이터는 그대로예요.' };
+    }
+    if (!Array.isArray(src.list) && !Array.isArray(src.shop)) {
+      return { ok: false, msg: '자주 사는 품목(shop) 목록이 없는 백업이에요. 기존 데이터는 그대로예요.' };
+    }
+    const next = stateFromParsed(src);
+    if (!next) {
+      return { ok: false, msg: '백업 데이터를 읽지 못했어요. 기존 데이터는 그대로예요.' };
+    }
+    if (src.fridge.length > 0 && !next.fridge.length) {
+      return { ok: false, msg: '냉장고 품목 형식이 올바르지 않아요. 기존 데이터는 그대로예요.' };
+    }
+    const listSrc = Array.isArray(src.list) ? src.list : src.shop;
+    if (listSrc.length > 0 && !next.list.length) {
+      return { ok: false, msg: '자주 사는 품목 형식이 올바르지 않아요. 기존 데이터는 그대로예요.' };
+    }
+    return { ok: true, state: next };
+  }
+
+  /* 복원: 검증 → 확인 → 정규화·마이그레이션된 상태로 교체 → 즉시 재렌더 */
+  function restoreFromText(text) {
+    const parsed = parseBackupText(text);
+    if (!parsed.ok) {
+      showToast(parsed.msg);
+      return false;
+    }
+    const ok = window.confirm('지금 데이터를 백업 시점으로 되돌릴까요?\n냉장고·장바구니·레시피·주간 식단표가 백업 내용으로 바뀝니다.');
+    if (!ok) {
+      showToast('복원을 취소했어요. 기존 데이터는 그대로예요.');
+      return false;
+    }
+    state = parsed.state;
+    activeCat = '전체';
+    activeShopCat = '전체';
+    activeMenuFilter = 'all';
+    query = '';
+    editingId = null;
+    editingItemId = null;
+    editingFridgeId = null;
+    editingRecipeId = null;
+    editingPlanDay = -1;
+    planRotate = 0;
+    ledgerYM = null;
+    ledgerCatFilter = '전체';
+    editingLedgerId = null;
+    lgCatTouched = false;
+    if (elLgCat) elLgCat.value = LEDGER_CATS[0];
+    lastDeleted = null;
+    elSearch.value = '';
+    elSearchBox.classList.remove('has-text');
+    elLgPasteText.value = '';
+    setLgPasteOpen(false);
+    elRestoreText.value = '';
+    save();
+    render();
+    setMenuPane('cook');
+    setView(state.tab, true);
+    closeBackupModal();
+    showToast('백업 데이터를 복원했어요!');
+    return true;
+  }
+
+  $('backupBtn').addEventListener('click', openBackupModal);
+  $('backupClose').addEventListener('click', closeBackupModal);
+  $('backupCopy').addEventListener('click', copyBackup);
+  $('backupFile').addEventListener('click', saveBackupFile);
+  $('restoreBtn').addEventListener('click', () => { restoreFromText(elRestoreText.value); });
+  elBackupModal.addEventListener('click', (e) => { if (e.target === elBackupModal) closeBackupModal(); });
+
+  /* .json 파일 읽어 붙여넣기 칸에 채우기 */
+  $('restoreFile').addEventListener('change', (e) => {
+    const inp = e.target;
+    const f = inp && inp.files && inp.files[0];
+    if (!f) return;
+    if (typeof FileReader === 'undefined') {
+      showToast('이 화면에서는 파일을 읽을 수 없어요. 백업 코드를 붙여넣어 주세요.');
+      return;
+    }
+    try {
+      const fr = new FileReader();
+      fr.onload = function () {
+        elRestoreText.value = String(fr.result == null ? '' : fr.result);
+        showToast('파일을 읽었어요. 「붙여넣은 백업으로 복원」을 눌러 주세요.');
+      };
+      fr.onerror = function () {
+        showToast('파일을 읽지 못했어요. 백업 코드를 붙여넣어 주세요.');
+      };
+      fr.readAsText(f, 'utf-8');
+    } catch (err) {
+      showToast('파일을 읽지 못했어요. 백업 코드를 붙여넣어 주세요.');
+    }
+  });
+
+  /* ─────────── 탭 / 초기화 ─────────── */
+  $('tabFridge').addEventListener('click', () => setView('fridge'));
+  $('tabShop').addEventListener('click', () => setView('shop'));
+  $('tabCart').addEventListener('click', () => setView('cart'));
+  $('tabMenu').addEventListener('click', () => setView('menu'));
+  $('tabLedger').addEventListener('click', () => setView('ledger'));
+
+  $('resetBtn').addEventListener('click', () => {
+    const ok = window.confirm('기본값으로 되돌릴까요?\n지금까지 추가·수정한 내용은 모두 사라져요.');
+    if (!ok) return;
+    state = freshState();
+    activeCat = '전체';
+    activeShopCat = '전체';
+    activeMenuFilter = 'all';
+    query = '';
+    editingId = null;
+    editingItemId = null;
+    editingFridgeId = null;
+    editingRecipeId = null;
+    editingPlanDay = -1;
+    planRotate = 0;
+    ledgerYM = null;
+    ledgerCatFilter = '전체';
+    editingLedgerId = null;
+    lgCatTouched = false;
+    if (elLgCat) elLgCat.value = LEDGER_CATS[0];
+    lastDeleted = null;
+    elSearch.value = '';
+    elSearchBox.classList.remove('has-text');
+    elLgPasteText.value = '';
+    setLgPasteOpen(false);
+    save();
+    render();
+    setView('fridge', true);
+    setMenuPane('cook');
+    showToast('기본값으로 되돌렸어요.');
+  });
+
+  /* ─────────── 첫 실행 ─────────── */
+  function cssEscape(s) {
+    if (window.CSS && CSS.escape) return CSS.escape(s);
+    return String(s).replace(/["\\]/g, '\\$&');
+  }
+
+  state = load();
+  save(); /* 이전 버전 저장값도 새 카테고리 기준으로 다시 기록 */
+  render();
+  setView(state.tab, true);
+})();
+</script>
+</body>
+</html>

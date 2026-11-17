@@ -181,6 +181,77 @@
     margin:0 2px 10px;
   }
   .count-line b{color:var(--ink-2); font-weight:700;}
+  .count-line--row{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .count-line--row>span{min-width:0;}
+
+  /* ── 냉장고 순서 변경 버튼 ── */
+  .order-btn{
+    flex:0 0 auto;
+    padding:5px 11px 6px;
+    border-radius:999px;
+    border:1px solid var(--brand-line);
+    background:#fff;
+    color:var(--brand-deep);
+    font-size:11.5px; font-weight:700; line-height:1.3; letter-spacing:-.01em;
+    white-space:nowrap;
+    transition:background .15s ease, color .15s ease, box-shadow .15s ease;
+  }
+  .order-btn.on{
+    background:var(--brand-deep); border-color:var(--brand-deep); color:#fff;
+    box-shadow:0 2px 8px rgba(108,90,114,.2);
+  }
+  .order-btn:active{transform:scale(.97);}
+
+  /* ── 순서 변경 모드(꾹 눌러 드래그) ── */
+  #fridgeList.is-reordering .item-card{
+    position:relative;
+    padding-left:42px;
+    touch-action:pan-y;
+    cursor:grab;
+    -webkit-user-select:none; user-select:none;
+    -webkit-touch-callout:none;
+  }
+  #fridgeList.is-reordering .item-card .state-btn,
+  #fridgeList.is-reordering .item-card .edit-btn,
+  #fridgeList.is-reordering .item-card .del-btn{display:none;}
+  .drag-handle{
+    position:absolute; left:4px; top:0; bottom:0;
+    width:34px;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--brand); font-size:15px; font-weight:800; letter-spacing:-1.5px;
+    border-radius:12px;
+    touch-action:none;
+    -webkit-user-select:none; user-select:none;
+    cursor:grab;
+  }
+  .drag-handle:active{background:var(--line-soft);}
+  .item-card.is-pressing{
+    border-color:var(--brand);
+    box-shadow:0 0 0 3px rgba(153,134,179,.14), var(--shadow);
+  }
+  .item-card.is-dragging{
+    position:fixed;
+    z-index:90;
+    margin:0;
+    padding-left:42px;
+    pointer-events:none;
+    border-color:var(--brand);
+    background:var(--card);
+    box-shadow:0 12px 28px rgba(108,90,114,.26), 0 2px 6px rgba(108,90,114,.12);
+    transform:scale(1.015) rotate(.35deg);
+    opacity:.97;
+    transition:none;
+  }
+  /* 드래그 중인 카드는 목록 밖(body)에 있어도 순서 변경 모드 모양을 유지 */
+  .item-card.is-dragging .state-btn,
+  .item-card.is-dragging .edit-btn,
+  .item-card.is-dragging .del-btn{display:none;}
+  .drag-placeholder{
+    border-radius:var(--r-lg);
+    border:1.5px dashed var(--brand-line);
+    background:rgba(224,219,239,.5);
+  }
+  body.is-dragging{-webkit-user-select:none; user-select:none; cursor:grabbing;}
 
   /* ── cards ── */
   .card-list{display:flex; flex-direction:column; gap:9px;}
@@ -1049,7 +1120,8 @@
     z-index:60;
     line-height:1.35;
   }
-  .toast.show{opacity:1; transform:translate(-50%,0); pointer-events:auto;}
+  .toast.show{opacity:1; transform:translate(-50%,0);}
+  .toast.show.has-undo{pointer-events:auto;}
   .toast-undo{
     flex:0 0 auto;
     padding:5px 9px;
@@ -1161,7 +1233,10 @@
       </div>
 
       <div class="chips" id="fridgeChips" role="group" aria-label="카테고리 필터"></div>
-      <div class="count-line" id="fridgeCount"></div>
+      <div class="count-line count-line--row">
+        <span id="fridgeCount"></span>
+        <button class="order-btn" id="fridgeOrderBtn" type="button" aria-pressed="false" aria-label="냉장고 품목 순서 변경">↕️ 순서 변경</button>
+      </div>
       <div class="card-list" id="fridgeList"></div>
 
       <form class="add-form" id="fridgeForm" autocomplete="off">
@@ -1968,6 +2043,7 @@
   const elFridge = $('view-fridge'), elShop = $('view-shop');
   const elSummary = $('fridgeSummary'), elChips = $('fridgeChips'), elFridgeList = $('fridgeList');
   const elFridgeCount = $('fridgeCount'), elSearch = $('fridgeSearch'), elSearchBox = $('searchBox');
+  const elOrderBtn = $('fridgeOrderBtn');
   const elShopList = $('shopList'), elShopSel = $('shopSel'), elSortBtn = $('sortBtn');
   const elShopChips = $('shopChips');
   const elCart = $('view-cart'), elCartList = $('cartList'), elCartTotal = $('cartTotal');
@@ -2022,7 +2098,7 @@
     elToast.classList.remove('show');
     elToast.innerHTML = '';
   }
-  function showToast(msg, undoFn) {
+  function showToast(msg, undoFn, ms) {
     clearTimeout(toastTimer);
     elToast.innerHTML = '';
     const span = document.createElement('span');
@@ -2037,7 +2113,8 @@
       elToast.appendChild(b);
     }
     elToast.classList.add('show');
-    toastTimer = setTimeout(hideToast, undoFn ? 6000 : 2300);
+    elToast.classList.toggle('has-undo', !!undoFn);
+    toastTimer = setTimeout(hideToast, undoFn ? 6000 : (ms || 2300));
   }
 
   /* ─────────── 카테고리 select 채우기 ─────────── */
@@ -2128,7 +2205,11 @@
         '</div>';
       }
 
-      return '<div class="card item-card' + (it.inStock ? '' : ' is-out') + '" data-id="' + esc(it.id) + '">' +
+      const handleHtml = reorderMode
+        ? '<span class="drag-handle" aria-hidden="true">⋮⋮</span>'
+        : '';
+      return '<div class="card item-card' + (it.inStock ? '' : ' is-out') + (reorderMode ? ' is-reorderable' : '') + '" data-id="' + esc(it.id) + '">' +
+        handleHtml +
         '<div class="item-main">' +
           '<div class="item-name">' + esc(it.name) + '</div>' +
           '<div class="item-meta">' + esc(it.memo || it.cat) + (it.memo ? ' · ' + esc(it.cat) : '') + '</div>' +
@@ -2139,6 +2220,193 @@
       '</div>';
     }).join('');
   }
+
+  /* ─────────── 냉장고 순서 변경(↕️ 순서 변경 → 꾹 눌러 드래그) ─────────── */
+  let reorderMode = false;
+  let drag = null;    /* 진행 중인 드래그 */
+  let press = null;   /* 꾹 누르기 대기 상태 */
+  const LONG_PRESS_MS = 220;      /* 카드 본문 꾹 누르기 */
+  const PRESS_TOLERANCE = 10;     /* 이만큼 움직이면 스크롤로 본다 */
+
+  function visibleFridgeIds() {
+    return Array.from(elFridgeList.querySelectorAll('.item-card')).map(c => c.getAttribute('data-id'));
+  }
+
+  function setReorderMode(on) {
+    on = !!on;
+    if (on === reorderMode) return;
+    cancelPress();
+    if (drag) endDrag(false);
+    reorderMode = on;
+    if (on) editingFridgeId = null;
+    elFridgeList.classList.toggle('is-reordering', on);
+    elOrderBtn.classList.toggle('on', on);
+    elOrderBtn.textContent = on ? '✓ 순서 완료' : '↕️ 순서 변경';
+    elOrderBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    elOrderBtn.setAttribute('aria-label', on ? '냉장고 순서 변경 완료' : '냉장고 품목 순서 변경');
+    renderFridge();
+    if (on) showToast('카드를 꾹 눌러 위아래로 끌면 순서가 바뀌어요.', null, 2800);
+  }
+
+  /* 보이는 목록에서 바뀔 순서를 state.fridge 전체 배열의 같은 자리들에 다시 앉힌다
+     → 카테고리 필터·검색 중에도 필터된 품목끼리의 상대 순서가 정확히 반영된다. */
+  function applyFridgeOrder(newVisibleIds) {
+    if (!newVisibleIds.length) return false;
+    const set = new Set(newVisibleIds);
+    const slots = [];
+    state.fridge.forEach((it, i) => { if (set.has(it.id)) slots.push(i); });
+    const byId = new Map(state.fridge.map(it => [it.id, it]));
+    const arranged = newVisibleIds.map(id => byId.get(id)).filter(Boolean);
+    if (arranged.length !== slots.length || !slots.length) return false;
+    slots.forEach((slot, k) => { state.fridge[slot] = arranged[k]; });
+    save();
+    return true;
+  }
+
+  function cancelPress() {
+    if (!press) return;
+    clearTimeout(press.timer);
+    if (press.card) press.card.classList.remove('is-pressing');
+    press = null;
+  }
+
+  function beginDrag(card, clientY) {
+    if (drag || !card || !elFridgeList.contains(card)) return;
+    const rect = card.getBoundingClientRect();
+    const ph = document.createElement('div');
+    ph.className = 'drag-placeholder';
+    ph.style.height = rect.height + 'px';
+    card.parentNode.insertBefore(ph, card);
+
+    drag = {
+      card: card,
+      ph: ph,
+      id: card.getAttribute('data-id'),
+      height: rect.height,
+      offsetY: Math.max(0, Math.min(rect.height, clientY - rect.top)),
+      fromOrder: visibleFridgeIds()
+    };
+
+    card.classList.remove('is-pressing');
+    card.classList.add('is-dragging');
+    card.style.width = rect.width + 'px';
+    card.style.height = rect.height + 'px';
+    card.style.left = Math.round(rect.left) + 'px';
+    card.style.top = Math.round(rect.top) + 'px';
+    document.body.appendChild(card);
+    document.body.classList.add('is-dragging');
+    try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) {}
+  }
+
+  function moveDrag(clientY) {
+    if (!drag) return;
+    const listRect = elFridgeList.getBoundingClientRect();
+    let top = clientY - drag.offsetY;
+    const minTop = listRect.top - 6;
+    const maxTop = listRect.bottom - drag.height + 6;
+    if (top < minTop) top = minTop;
+    if (top > maxTop) top = maxTop;
+    drag.card.style.top = Math.round(top) + 'px';
+
+    const center = top + drag.height / 2;
+    const cards = Array.from(elFridgeList.querySelectorAll('.item-card'));
+    let target = null;
+    for (let i = 0; i < cards.length; i++) {
+      const r = cards[i].getBoundingClientRect();
+      if (center < r.top + r.height / 2) { target = cards[i]; break; }
+    }
+    if (target) {
+      if (target !== drag.ph.nextElementSibling) elFridgeList.insertBefore(drag.ph, target);
+    } else if (elFridgeList.lastElementChild !== drag.ph) {
+      elFridgeList.appendChild(drag.ph);
+    }
+  }
+
+  function endDrag(commit) {
+    if (!drag) return;
+    const d = drag;
+    drag = null;
+    document.body.classList.remove('is-dragging');
+
+    /* 놓인 자리 기준으로 보이는 목록의 새 순서를 읽는다 */
+    const newOrder = [];
+    Array.from(elFridgeList.children).forEach(ch => {
+      if (ch === d.ph) newOrder.push(d.id);
+      else if (ch.classList && ch.classList.contains('item-card')) newOrder.push(ch.getAttribute('data-id'));
+    });
+
+    if (d.ph.parentNode) d.ph.parentNode.removeChild(d.ph);
+    if (d.card.parentNode) d.card.parentNode.removeChild(d.card);
+
+    let changed = false;
+    if (commit && newOrder.length === d.fromOrder.length && newOrder.join('|') !== d.fromOrder.join('|')) {
+      changed = applyFridgeOrder(newOrder);
+    }
+    renderFridge();
+    if (changed) showToast('순서를 저장했어요.', null, 1600);
+  }
+
+  /* 꾹 누르기 / 끌기 입력 처리 (터치·마우스 공통) */
+  function pressTimerFire() {
+    if (!press) return;
+    const p = press;
+    press = null;
+    beginDrag(p.card, p.startY);
+  }
+
+  elFridgeList.addEventListener('pointerdown', (e) => {
+    if (!reorderMode || drag) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const card = e.target && e.target.closest ? e.target.closest('.item-card') : null;
+    if (!card || !elFridgeList.contains(card)) return;
+    if (card.classList.contains('is-editing')) return;
+    cancelPress();
+
+    const onHandle = !!(e.target.closest && e.target.closest('.drag-handle'));
+    press = {
+      card: card,
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      timer: null
+    };
+    card.classList.add('is-pressing');
+    if (onHandle) {
+      e.preventDefault();          /* 손잡이에서는 바로 드래그로 이어진다 */
+      press.timer = setTimeout(pressTimerFire, 30);
+    } else {
+      press.timer = setTimeout(pressTimerFire, LONG_PRESS_MS);
+    }
+  });
+
+  function onDragPointerMove(e) {
+    if (drag) { moveDrag(e.clientY); return; }
+    if (!press) return;
+    if (Math.abs(e.clientX - press.startX) > PRESS_TOLERANCE ||
+        Math.abs(e.clientY - press.startY) > PRESS_TOLERANCE) {
+      cancelPress();               /* 꾹 누르기 전에 움직였으면 그냥 스크롤 */
+    }
+  }
+  document.addEventListener('pointermove', onDragPointerMove, { passive: true });
+  document.addEventListener('pointerup', () => {
+    if (drag) endDrag(true);
+    cancelPress();
+  });
+  document.addEventListener('pointercancel', () => {
+    if (drag) endDrag(false);
+    cancelPress();
+  });
+  window.addEventListener('blur', () => {
+    if (drag) endDrag(false);
+    cancelPress();
+  });
+
+  /* 드래그 중에는 페이지가 같이 스크롤되지 않게 */
+  document.addEventListener('touchmove', (e) => {
+    if (drag && e.cancelable) e.preventDefault();
+  }, { passive: false });
+
+  elOrderBtn.addEventListener('click', () => setReorderMode(!reorderMode));
 
   /* ─────────── 장보기 탭 ─────────── */
   function shopFiltered() {
@@ -3087,6 +3355,9 @@
 
     /* 다른 탭으로 옮겨가도 냉장고 품목 편집 상태가 남지 않게 */
     if (editingFridgeId) { editingFridgeId = null; renderFridge(); }
+
+    /* 다른 탭으로 옮겨가면 순서 변경 모드도 닫는다 */
+    if (t !== 'fridge' && reorderMode) setReorderMode(false);
 
     state.tab = t;
     if (!silent) save();

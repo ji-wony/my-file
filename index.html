@@ -1502,6 +1502,8 @@
   ];
   /* 자주 사는 품목 보충 스키마 버전 (frequentAddedV2 = 2) */
   const FREQ_ADD_SCHEMA = 2;
+  /* 두부·버섯 자리를 한 번 옮겼는지 기록하는 플래그 버전 */
+  const TOFU_SPLIT_SCHEMA = 1;
   /* 예전에는 채소·과일과 두부·버섯을 한 묶음('채소·두부·버섯', '채소·과일·두부·버섯')으로 저장했다.
      그 값이 저장값·백업에 남아 있으면 품목명을 보고 「두부·버섯」과 「채소·과일」로 나눈다. */
   const MERGED_VEG_CATS = ['채소·두부·버섯', '채소·과일·두부·버섯', '채소·버섯', '채소·두부'];
@@ -1616,7 +1618,7 @@
       fridge: defaultFridge(), list: defaultList(), cart: [], recipes: defaultRecipes(),
       weeklyPlan: [], ledger: [],
       tab: 'fridge', favFirst: false, catVersion: SHOP_CAT_SCHEMA,
-      frequentAddedV2: FREQ_ADD_SCHEMA, fridgeCatVersion: FRIDGE_CAT_SCHEMA
+      frequentAddedV2: FREQ_ADD_SCHEMA, tofuSplitV1: TOFU_SPLIT_SCHEMA, fridgeCatVersion: FRIDGE_CAT_SCHEMA
     };
   }
 
@@ -1645,6 +1647,8 @@
     const fromVersion = isNaN(ver) ? 1 : ver;   /* 플래그 없는 구버전 저장값 = 1 */
     const list = listSrc.map(normList).filter(Boolean);
     migrateShopCats(list, fromVersion);
+    /* 예전에는 두부·버섯도 '채소·과일'·'기타·생필품'에 들어 있었다 → 한 번만 '두부·버섯'으로 옮긴다 */
+    if (!tofuSplitDone(p)) splitShopTofuOnce(list);
     /* 반복 구매 식재료 7종 1회 보충 (이미 직접 넣었거나, 보충 후 지운 경우는 플래그로 보호) */
     if (!freqAddDone(p)) supplementFrequent(list);
     const fridge = p.fridge.map(normFridge).filter(Boolean);
@@ -1662,6 +1666,7 @@
       favFirst: !!p.favFirst,
       catVersion: SHOP_CAT_SCHEMA,
       frequentAddedV2: FREQ_ADD_SCHEMA,
+      tofuSplitV1: TOFU_SPLIT_SCHEMA,
       fridgeCatVersion: FRIDGE_CAT_SCHEMA
     };
   }
@@ -1908,6 +1913,28 @@
     if (v === undefined || v === null) return false;
     if (v === false || v === 0 || v === '0' || v === '') return false;
     return true;
+  }
+
+  /* 두부·버섯 자리를 한 번 옮겼는지 (플래그가 있으면 사용자가 다시 고른 값을 건드리지 않는다) */
+  function tofuSplitDone(p) {
+    const v = p ? p.tofuSplitV1 : null;
+    if (v === undefined || v === null) return false;
+    if (v === false || v === 0 || v === '0' || v === '') return false;
+    return true;
+  }
+
+  /* 예전에는 두부·순두부·버섯도 '채소·과일'·'기타·생필품'에 담겨 있었다.
+     처음 불러올 때 한 번만 이름을 보고 '두부·버섯'으로 옮긴다. (옮긴 뒤에는 사용자가 고른 값 우선)
+     - 옮겼거나 이미 자리가 맞는 품목이 있으면 true */
+  function splitShopTofuOnce(list) {
+    let touched = false;
+    list.forEach(it => {
+      if (it.cat !== '채소·과일' && it.cat !== '기타·생필품') return;
+      if (!isTofuMushroomName(it.name)) return;
+      it.cat = '두부·버섯';
+      touched = true;
+    });
+    return touched;
   }
 
   /* FREQ_SEED_V2 중 아직 목록에 없는 품목만, 같은 카테고리 묶음 끝에 끼워 넣는다.

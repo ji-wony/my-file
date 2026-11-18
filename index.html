@@ -752,6 +752,17 @@
     font-size:10.5px; font-weight:700; line-height:1.4; letter-spacing:-.01em;
     white-space:nowrap;
   }
+  /* 레시피 즐겨찾기 별 — 카드 제목 줄 맨 왼쪽 (자주 사는 품목의 ☆ 버튼과 같은 톤) */
+  .recipe-fav{
+    flex:0 0 auto; width:30px; height:30px; margin:-2px 0 -2px -5px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:50%;
+    font-size:20px; line-height:1;
+    color:#CBC3DC;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .recipe-fav:active{background:var(--lilac-100);}
+  .recipe-fav.on{color:var(--star);}
   /* 재료 부족 레시피 펼치기 (기본 접힘 · 아주 작은 보조 링크) */
   .far-toggle{
     display:block; width:100%; margin:12px 0 0; padding:8px 10px;
@@ -2479,6 +2490,8 @@
   /* 레시피 (이전 저장값에는 없음 → 기본 레시피로 채움) */
   /* ─────────── 레시피 카테고리 (나의 레시피 6분류) ─────────── */
   const RECIPE_CATS = ['국·찌개', '솥밥·볶음밥', '면류', '메인요리', '기타', '간식'];
+  /* 즐겨찾기 전용 칩 — 카테고리가 아니라 fav 필드로 거른다 */
+  const RECIPE_FAV_CAT = '★ 즐겨찾기';
 
   /* 요리 이름 키워드로 카테고리 추정
      · 예전에 저장한 레시피·기본 레시피에 category가 없을 때 안전하게 채운다
@@ -2533,7 +2546,9 @@
       /* 예전 저장값·백업에는 category가 없다 → 요리 이름으로 추정해 넣는다 */
       category: RECIPE_CATS.indexOf(String(o.category == null ? '' : o.category).trim()) >= 0
         ? String(o.category).trim()
-        : guessRecipeCategory(nm)
+        : guessRecipeCategory(nm),
+      /* 즐겨찾기(★) — 없던 예전 저장값·백업은 false */
+      fav: !!o.fav
     };
   }
 
@@ -3724,6 +3739,10 @@
 
     return '<div class="card recipe-card' + (open ? ' is-open' : '') + '" data-id="' + esc(r.id) + '" role="button" tabindex="0" aria-expanded="' + (open ? 'true' : 'false') + '">' +
       '<div class="recipe-head">' +
+        '<button type="button" class="recipe-fav' + (r.fav ? ' on' : '') + '" data-action="fav-recipe"' +
+          ' aria-pressed="' + (r.fav ? 'true' : 'false') + '"' +
+          ' aria-label="' + esc(r.name) + (r.fav ? ' 즐겨찾기 해제' : ' 즐겨찾기') + '" title="즐겨찾기">' +
+          (r.fav ? '★' : '☆') + '</button>' +
         '<div class="recipe-name"><span class="recipe-cat">' + esc(cat) + '</span>' + esc(r.name) + '</div>' +
         '<span class="recipe-badge ' + st.key + '">' + st.label + '</span>' +
       '</div>' +
@@ -3751,8 +3770,10 @@
       return { r: r, i: i, have: e.have, miss: e.miss, cat: recipeCatOf(r) };
     });
 
-    /* 지금 고른 카테고리 칩 안의 레시피들 */
-    const inCat = rows.filter(x => activeMenuCat === '전체' || x.cat === activeMenuCat);
+    /* 지금 고른 칩 안의 레시피들 — '★ 즐겨찾기'는 카테고리 대신 fav 필드로 거른다 */
+    const inCat = rows.filter(x =>
+      activeMenuCat === '전체' ? true
+        : (activeMenuCat === RECIPE_FAV_CAT ? x.r.fav === true : x.cat === activeMenuCat));
     const myOk = inCat.filter(x => x.miss.length === 0).length;
     const mySoon = inCat.filter(x => x.miss.length > 0 && x.miss.length <= 2).length;
     /* 재료가 3개 이상 부족한 레시피 → 평소엔 접어 두고 하단 보조 링크로만 연다 */
@@ -3764,7 +3785,7 @@
       '<div class="sum-item"><div class="sum-label">거의 가능</div><div class="sum-value">' + mySoon + '<span class="unit">개</span></div></div>';
 
     /* 카테고리 칩 — 이름만 표시(개수 숫자 없음) — 냉장고·자주 사는 품목·가계부 칩과 같은 방식 */
-    const chipDefs = ['전체'].concat(RECIPE_CATS);
+    const chipDefs = ['전체', RECIPE_FAV_CAT].concat(RECIPE_CATS);
     elMenuChips.innerHTML = chipDefs.map(c =>
       '<button type="button" class="chip' + (activeMenuCat === c ? ' on' : '') + '" data-mcat="' + esc(c) + '" aria-pressed="' + (activeMenuCat === c) + '">' +
       esc(c) + '</button>'
@@ -3777,13 +3798,19 @@
     elMenuMyCount.textContent = String(myList.length);
 
     if (!myList.length) {
-      elMenuList.innerHTML = '<div class="empty">' +
-        (state.recipes.length
-          ? (activeMenuCat === '전체'
-              ? '지금 바로 하거나 재료 1~2개만 더 있으면 되는 레시피가 없어요.'
-              : '「' + esc(activeMenuCat) + '」 레시피 중 지금 바로 하거나 재료 1~2개만 더 있으면 되는 게 없어요.')
-          : '나의 레시피가 없어요. 아래에서 등록해 보세요.') +
-        '</div>';
+      let emptyMsg;
+      if (!state.recipes.length) {
+        emptyMsg = '나의 레시피가 없어요. 아래에서 등록해 보세요.';
+      } else if (activeMenuCat === RECIPE_FAV_CAT) {
+        emptyMsg = state.recipes.some(r => r.fav)
+          ? '즐겨찾기한 레시피가 지금은 모두 재료가 3개 이상 부족해요. 아래 「재료 부족 레시피」에서 확인할 수 있어요.'
+          : '즐겨찾기에 담아둔 레시피가 없어요. 레시피 왼쪽 위 별(☆)을 눌러 모아 보세요.';
+      } else if (activeMenuCat === '전체') {
+        emptyMsg = '지금 바로 하거나 재료 1~2개만 더 있으면 되는 레시피가 없어요.';
+      } else {
+        emptyMsg = '「' + esc(activeMenuCat) + '」 레시피 중 지금 바로 하거나 재료 1~2개만 더 있으면 되는 게 없어요.';
+      }
+      elMenuList.innerHTML = '<div class="empty">' + emptyMsg + '</div>';
     } else {
       elMenuList.innerHTML = myList.map(recipeCardHtml).join('');
     }
@@ -4638,6 +4665,10 @@
       renderMenu();
     } else if (action === 'recipe-save') {
       saveRecipeEdit(card, r);
+    } else if (action === 'fav-recipe') {
+      r.fav = !r.fav;
+      save(); renderMenu();
+      showToast(r.fav ? '즐겨찾기에 추가했어요.' : '즐겨찾기에서 뺐어요.');
     } else if (action === 'recipe-cart') {
       addMissingToCart(r);
     } else if (action === 'recipe-del') {

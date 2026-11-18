@@ -448,6 +448,24 @@
     background-position:right 11px center;
     padding-right:30px;
   }
+  /* 레시피 메모: 5줄 높이 textarea (줄바꿈 그대로 입력) */
+  .edit-row-memo{align-items:flex-start;}
+  .edit-row-memo .edit-label{padding-top:11px;}
+  .edit-row textarea.r-memo{
+    flex:1 1 auto; min-width:0; width:100%;
+    min-height:115px;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:#FBFAFD;
+    font-size:13.5px; line-height:1.5;
+    resize:vertical; outline:none;
+  }
+  .edit-row textarea.r-memo::placeholder{color:#8F87A3;}
+  .edit-row textarea.r-memo:focus{
+    border-color:var(--brand-line);
+    box-shadow:0 0 0 3px rgba(153,134,179,.09);
+  }
   .edit-actions{display:flex; gap:6px; margin-top:2px;}
   .edit-actions button{
     flex:1 1 0; min-width:0;
@@ -508,6 +526,19 @@
   }
   .add-form input::placeholder{color:#8F87A3;}
   .add-form input:focus, .add-form select:focus{border-color:var(--brand-line); box-shadow:0 0 0 3px rgba(153,134,179,.08);}
+  .add-form textarea{
+    width:100%;
+    min-height:115px;
+    padding:12px 12px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:#fff;
+    outline:none;
+    font-size:15px; line-height:1.5;
+    resize:vertical;
+  }
+  .add-form textarea::placeholder{color:#8F87A3;}
+  .add-form textarea:focus{border-color:var(--brand-line); box-shadow:0 0 0 3px rgba(153,134,179,.08);}
   .add-form select{
     appearance:none; -webkit-appearance:none;
     background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%236F6780' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
@@ -1409,7 +1440,7 @@
             <input id="recipeItems" type="text" placeholder="필요 재료 (쉼표로 구분: 닭다리살, 깐마늘, 대파)" aria-label="필요 재료">
           </div>
           <div class="row">
-            <input id="recipeMemo" type="text" placeholder="조리법·메모 (예: 간장·참기름 양념해 40분 찌기)" aria-label="조리법 메모">
+            <textarea id="recipeMemo" rows="5" placeholder="조리법·메모 (예: 간장·참기름 양념해 40분 찌기)" aria-label="조리법 메모"></textarea>
           </div>
           <div class="row">
             <input id="recipeUrl" type="url" placeholder="영상 링크 (선택 · 인스타 릴스 주소)" aria-label="영상 링크">
@@ -3651,8 +3682,8 @@
             '</select></div>' +
           '<div class="edit-row"><span class="edit-label">재료</span>' +
             '<input class="r-items" type="text" value="' + esc(r.items.join(', ')) + '" placeholder="닭다리살, 깐마늘" aria-label="필요 재료"></div>' +
-          '<div class="edit-row"><span class="edit-label">메모</span>' +
-            '<input class="r-memo" type="text" value="' + esc(r.memo) + '" placeholder="조리법·메모" aria-label="조리법 메모"></div>' +
+          '<div class="edit-row edit-row-memo"><span class="edit-label">메모</span>' +
+            '<textarea class="r-memo" rows="5" placeholder="조리법·메모" aria-label="조리법 메모">' + esc(r.memo) + '</textarea></div>' +
           '<div class="edit-row"><span class="edit-label">링크</span>' +
             '<input class="r-url" type="url" value="' + esc(r.url || '') + '" placeholder="영상 링크 (선택, 비워도 됨)" aria-label="영상 링크"></div>' +
           '<div class="edit-actions">' +
@@ -4647,7 +4678,8 @@
     if (!card) return;
     const r = state.recipes[state.recipes.findIndex(x => x.id === card.getAttribute('data-id'))];
     if (!r) return;
-    if (e.key === 'Enter') {
+    /* 메모는 textarea라 Enter가 줄바꿈이어야 한다 (저장은 저장 버튼으로) */
+    if (e.key === 'Enter' && t.tagName !== 'TEXTAREA') {
       e.preventDefault();
       saveRecipeEdit(card, r);
     } else if (e.key === 'Escape') {

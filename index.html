@@ -3576,31 +3576,243 @@
       .replace(/[()\[\]{}]/g, '');
   }
 
-  /* 냉장고에서 보유 중인 품목 이름의 비교용 키 목록 */
+  /* ── 재료 이름 매칭 ──
+     같은 재료를 다르게 적어 둔 경우를 흡수한다.
+       ① 구분자로 묶어 적은 이름      설탕/스테비아 → 설탕 · 스테비아
+       ② 괄호 안에 함께 적은 다른 이름  설탕(흑설탕)
+       ③ 손질·수식 접두어             깐마늘 · 다진마늘 · 통마늘 → 마늘
+       ④ 대표 동의어 그룹             계란 ↔ 대란, 진간장 ↔ 양조간장
+       ⑤ 공통 핵심 단어               통삼겹 ↔ 삼겹살, 닭다리살 ↔ 닭고기
+     단 '가루·소스·기름·고기·버섯'처럼 넓은 분류어만 겹치는 것은 다른 재료로 본다
+     (고춧가루 ↔ 카레가루, 불닭소스 ↔ 굴소스, 돼지고기 ↔ 소고기, 참기름 ↔ 들기름). */
+
+  /* 이름을 나누는 구분자 (설탕/스테비아, 소금·후추, 마늘,양파 …) */
+  const NAME_SPLIT_RE = /[\/,，;；·・&＆+＋|]+/;
+
+  /* 재료가 아닌 표기 — 매칭 키로 쓰지 않는다 */
+  const NOTE_WORDS = [
+    '냉장', '냉동', '실온', '상온', '소분', '보관', '국산', '국내산', '수입산', '미국산', '호주산',
+    '한돈', '한우', '육우', '정육', '구이용', '볶음용', '찌개용', '국거리', '튀김용', '조림용', '무침용',
+    '생략가능', '생략', '선택', '약간', '취향껏', '인분'
+  ];
+
+  /* 넓은 분류어·접미어 — 이 낱말 하나만 겹쳐서는 같은 재료로 보지 않는다 */
+  const STOP_WORDS = [
+    '가루', '소스', '육수', '기름', '오일', '고기', '채소', '야채', '버섯', '국물', '양념', '시즈닝',
+    '드레싱', '페스토', '파우더', '분말', '액젓', '식초', '청주', '맛술', '간장', '시럽', '통조림', '즙',
+    '치즈', '소금'
+  ];
+
+  /* 손질·수식 접두어 — 떼고 나서 2글자 이상 남을 때만 뗀다.
+     '생'은 생강·생선·생크림처럼 떼면 다른 낱말이 되므로 넣지 않는다. */
+  const MATCH_PREFIXES = [
+    '다진', '깐', '통', '냉동', '냉장', '삶은', '삶아', '구운', '구워', '데친', '데쳐', '채썬', '채친',
+    '슬라이스한', '슬라이스', '손질한', '손질', '국산', '국내산', '수입산', '미국산', '호주산', '한돈',
+    '한우', '육우', '볶은', '말린', '절인', '으깬', '곱게', '잘게', '얇게', '불린', '해동', '자숙', '완숙'
+  ];
+
+  /* 대표 동의어 그룹 — 같은 그룹이면 같은 재료로 본다 */
+  const SYNONYM_GROUPS = [
+    ['달걀', '계란', '대란', '특란', '왕란', '유정란'],
+    ['진간장', '양조간장', '간장', '재래간장', '햇간장'],
+    ['백설탕', '황설탕', '흑설탕', '갈색설탕', '설탕'],
+    ['식용유', '카놀라유', '포도씨유', '해바라기유', '콩기름', '오일', '채종유', '현미유', '튀김유'],
+    ['올리브유', '올리브오일', '엑스트라버진올리브유'],
+    ['후추', '통후추', '백후추', '흑후추', '후춧가루', '후추가루'],
+    ['소금', '꽃소금', '맛소금', '천일염', '굵은소금', '구운소금'],
+    ['대파', '파'],
+    ['닭고기', '닭다리살', '닭가슴살', '닭다리', '닭가슴', '닭안심', '닭살', '닭정육', '닭']
+  ];
+
+  let _synIndex = null;
+  function synIndex() {
+    if (!_synIndex) {
+      _synIndex = {};
+      for (let i = 0; i < SYNONYM_GROUPS.length; i++) {
+        SYNONYM_GROUPS[i].forEach(n => {
+          const k = normForMatch(n);
+          if (k && _synIndex[k] === undefined) _synIndex[k] = i;
+        });
+      }
+    }
+    return _synIndex;
+  }
+
+  function synGroupOf(k) {
+    if (!k) return -1;
+    const idx = synIndex();
+    return idx[k] === undefined ? -1 : idx[k];
+  }
+
+  /* 같은 동의어 그룹이면 같은 재료 */
+  function synSame(a, b) {
+    if (!a || !b) return false;
+    const ga = synGroupOf(a);
+    return ga >= 0 && ga === synGroupOf(b);
+  }
+
+  /* 접두어를 안전하게 뗀 핵심 이름 (깐마늘 → 마늘, 다진마늘 → 마늘) */
+  function coreKey(k) {
+    let cur = String(k == null ? '' : k);
+    for (let pass = 0; pass < 3; pass++) {
+      let cut = false;
+      for (let i = 0; i < MATCH_PREFIXES.length; i++) {
+        const p = MATCH_PREFIXES[i];
+        /* 떼고 나서 2글자 이상 남을 때만 (생강 → 강, 참기름 → 참 같은 사고 방지) */
+        if (cur.length >= p.length + 2 && cur.indexOf(p) === 0) {
+          cur = cur.slice(p.length);
+          cut = true;
+          break;
+        }
+      }
+      if (!cut) break;
+    }
+    return cur;
+  }
+
+  /* 넓은 분류어를 걷어 낸 몸통 (고춧가루 → 고춧, 카레가루 → 카레) */
+  function stripStops(k) {
+    let out = String(k == null ? '' : k);
+    for (let i = 0; i < STOP_WORDS.length; i++) {
+      const w = STOP_WORDS[i];
+      if (out.indexOf(w) >= 0) out = out.split(w).join('');
+    }
+    return out;
+  }
+
+  /* '냉장', '600g', '2개'처럼 재료가 아닌 조각 */
+  function isNoteKey(k) {
+    if (!k) return true;
+    if (NOTE_WORDS.indexOf(k) >= 0) return true;
+    if (/^[0-9.,]+(kg|g|ml|l|cm|mm|개|구|팩|봉|장|매|마리|컵|인분|입|병|캔|봉지)?$/.test(k)) return true;
+    return false;
+  }
+
+  const _variantCache = {};
+
+  /* 이름 하나가 만들어 내는 매칭 후보들 (전체·구분자 조각·괄호 안·접두어 제거·핵심 단어) */
+  function keyVariants(name) {
+    const raw = String(name == null ? '' : name);
+    if (_variantCache[raw]) return _variantCache[raw];
+
+    const out = [], seen = {};
+    function add(v) {
+      const s = String(v == null ? '' : v);
+      if (s.length < 2 || seen[s] || isNoteKey(s) || STOP_WORDS.indexOf(s) >= 0) return;
+      seen[s] = 1;
+      out.push(s);
+      const core = coreKey(s);
+      if (core !== s && core.length >= 2 && !seen[core] && STOP_WORDS.indexOf(core) < 0) {
+        seen[core] = 1;
+        out.push(core);
+      }
+    }
+
+    /* 괄호 안 텍스트는 따로 모으고, 괄호 밖은 공백으로 남겨 둔다 */
+    const brackets = [];
+    const outside = raw.replace(/[\(\[]([^\)\]]*)[\)\]]/g, (m, inner) => {
+      brackets.push(inner);
+      return ' ';
+    });
+
+    const full = normForMatch(raw);
+    if (full) {
+      if (seen[full] === undefined) { seen[full] = 1; out.push(full); }
+      const core = coreKey(full);
+      if (core !== full && core.length >= 2 && seen[core] === undefined && STOP_WORDS.indexOf(core) < 0) {
+        seen[core] = 1;
+        out.push(core);
+      }
+    }
+
+    const segs = [outside].concat(brackets);
+    for (let s = 0; s < segs.length; s++) {
+      const words = String(segs[s]).split(/[\s\u00A0]+/).map(w => w.trim()).filter(Boolean);
+      /* 구분자로 나열한 이름은 조각마다 키로 (설탕/스테비아 → 설탕 · 스테비아) */
+      words.forEach(w => {
+        const pieces = w.split(NAME_SPLIT_RE).filter(Boolean);
+        if (pieces.length < 2) return;
+        pieces.forEach(p => add(normForMatch(p)));
+      });
+      /* 띄어 쓴 이름은 맨 뒤 핵심 낱말 하나만 — 브랜드·수식 문구가 키가 되지 않게
+         (예: "곰곰 닭다리살 정육 (냉장)" → 닭다리살, "탐사 샘물 2L" → 샘물) */
+      for (let w = words.length - 1; w >= 0; w--) {
+        const head = words[w].split(NAME_SPLIT_RE).filter(Boolean)[0] || '';
+        const k = normForMatch(head);
+        if (!k || isNoteKey(k)) continue;
+        add(k);
+        break;
+      }
+    }
+
+    _variantCache[raw] = out;
+    return out;
+  }
+
+  /* 두 키가 같은 재료를 가리키는지 */
+  function keysMatch(a, b) {
+    if (!a || !b) return false;
+    if (a === b) return true;
+
+    const aStop = STOP_WORDS.indexOf(a) >= 0;
+    const bStop = STOP_WORDS.indexOf(b) >= 0;
+
+    /* 한쪽이 '간장'·'치즈'처럼 두루 쓰는 이름이면, 구체적인 이름이 그 낱말을 품고 있을 때만 인정한다.
+       (레시피 '간장' ↔ 냉장고 '국간장'은 맞고, '진간장' ↔ '국간장'은 다르다) */
+    if (aStop || bStop) {
+      const generic = aStop ? a : b;
+      const specific = aStop ? b : a;
+      if (specific.indexOf(generic) >= 0) return true;
+      /* '천일염' ↔ '소금'처럼 동의어 그룹이 같으면 여기서도 인정한다 */
+      return synSame(a, b);
+    }
+
+    /* 기존 방식 그대로 양방향 부분 문자열 (1글자 재료 무·파·김·쌀·물·깨·면·떡 포함) */
+    if (a.indexOf(b) >= 0 || b.indexOf(a) >= 0) return true;
+
+    /* 넓은 분류어를 양쪽에서 걷어 낸 몸통끼리 비교
+       (고춧가루·카레가루는 '고춧'·'카레'로 갈려 걸러지고, 고추기름은 청양고추와 엮이지 않는다) */
+    const sa = stripStops(a), sb = stripStops(b);
+    const trimmed = sa !== a && sb !== b;
+    if (trimmed && sa.length >= 2 && sb.length >= 2 &&
+        (sa === sb || sa.indexOf(sb) >= 0 || sb.indexOf(sa) >= 0)) return true;
+
+    if (synSame(a, b)) return true;
+    if (trimmed && sa.length >= 2 && sb.length >= 2 && synSame(sa, sb)) return true;
+    return false;
+  }
+
+  /* 냉장고에서 보유 중인 품목들의 비교용 키 목록 */
   function stockedKeys() {
-    const out = [];
+    const out = [], seen = {};
     state.fridge.forEach(f => {
       if (!f.inStock) return;
-      const k = normForMatch(f.name);
-      if (k) out.push(k);
+      keyVariants(f.name).forEach(k => {
+        if (!k || seen[k]) return;
+        seen[k] = 1;
+        out.push(k);
+      });
     });
     return out;
   }
 
-  /* 양방향 부분 문자열 대조 */
+  /* 레시피 재료 하나가 냉장고에 있는지 — '/' 등으로 나뉜 재료는 하나라도 있으면 있음 */
   function isStocked(ingKey, keys) {
     if (!ingKey) return false;
-    for (let i = 0; i < keys.length; i++) {
-      const k = keys[i];
-      if (k.indexOf(ingKey) >= 0 || ingKey.indexOf(k) >= 0) return true;
+    const iv = keyVariants(ingKey);
+    for (let a = 0; a < iv.length; a++) {
+      const v = iv[a];
+      for (let i = 0; i < keys.length; i++) {
+        if (keysMatch(v, keys[i])) return true;
+      }
     }
     return false;
   }
 
   function evalRecipe(r, keys) {
     const have = [], miss = [];
-    r.items.forEach(it => {
-      if (isStocked(normForMatch(it), keys)) have.push(it);
+    (r.items || []).forEach(it => {
+      if (isStocked(it, keys)) have.push(it);
       else miss.push(it);
     });
     return { have: have, miss: miss };
@@ -4091,7 +4303,7 @@
   /* 부족 재료를 장바구니로 (자주 사는 품목에 상품이 있으면 그 이름·쿠팡 링크를 그대로) */
   function addMissingToCart(r) {
     const keys = stockedKeys();
-    const miss = r.items.filter(it => !isStocked(normForMatch(it), keys));
+    const miss = r.items.filter(it => !isStocked(it, keys));
     if (!miss.length) { showToast('부족한 재료가 없어요. 바로 만들 수 있어요!'); return; }
 
     let added = 0, merged = 0, fromShop = 0;
@@ -4100,7 +4312,7 @@
       let prod = null;
       for (let i = 0; i < state.list.length; i++) {
         const lk = normForMatch(state.list[i].name);
-        if (lk && (lk.indexOf(ik) >= 0 || ik.indexOf(lk) >= 0)) { prod = state.list[i]; break; }
+        if (lk && (lk.indexOf(ik) >= 0 || ik.indexOf(lk) >= 0 || keysMatch(ik, lk))) { prod = state.list[i]; break; }
       }
       const name = prod ? prod.name : ing;
       const url = prod ? (prod.url || '') : '';

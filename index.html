@@ -131,6 +131,9 @@
   .sum-value{font-size:22px; font-weight:800; color:var(--brand-deep); letter-spacing:-.02em; line-height:1.15;}
   .sum-value .unit{font-size:12px; font-weight:600; color:var(--ink-2); margin-left:1px;}
   .sum-item + .sum-item{border-left:1px dashed rgba(153,134,179,.25);}
+  /* 메뉴 추천 요약은 '지금 가능 / 거의 가능' 2칸만 → 2열로 좌우 균형 */
+  #menuSummary{grid-template-columns:repeat(2,1fr);}
+  #askMenuBtn{margin:2px 0 10px;}
 
   /* ── search + chips ── */
   .search-box{position:relative; margin-bottom:12px;}
@@ -709,6 +712,28 @@
   .recipe-badge.ok{background:var(--brand-deep); color:#fff;}
   .recipe-badge.soon{background:var(--brand-soft); color:var(--brand-deep); border:1px solid var(--brand-line);}
   .recipe-badge.far{background:#fff; color:var(--ink-3); border:1px dashed var(--line);}
+  /* 레시피 카테고리 라벨 (연보라 뱃지) */
+  .recipe-cat{
+    display:inline-block; vertical-align:1px; margin-right:5px;
+    padding:2px 7px; border-radius:999px;
+    background:var(--brand-soft); border:1px solid var(--brand-line);
+    color:var(--brand-deep);
+    font-size:10.5px; font-weight:700; line-height:1.4; letter-spacing:-.01em;
+    white-space:nowrap;
+  }
+  /* 재료 부족 레시피 펼치기 (기본 접힘 · 아주 작은 보조 링크) */
+  .far-toggle{
+    display:block; width:100%; margin:12px 0 0; padding:8px 10px;
+    border:1px dashed var(--brand-line); border-radius:var(--r-sm);
+    background:#fff; color:var(--ink-3);
+    font-size:11.5px; font-weight:600; line-height:1.4;
+  }
+  .far-toggle[hidden]{display:none;}
+  .far-toggle:active{background:var(--brand-soft);}
+  #menuFarList{margin-top:10px;}
+  #menuFarList[hidden]{display:none;}   /* .card-list가 display:flex라 hidden을 직접 눌러 준다 */
+  /* 레시피 카테고리 칩 6개는 스크롤 대신 두 줄로 다 보이게 */
+  #menuChips{flex-wrap:wrap; overflow:visible;}
 
   .recipe-tags{display:flex; flex-wrap:wrap; gap:5px; margin-top:9px;}
   .ing{
@@ -767,10 +792,6 @@
     text-align:center; word-break:keep-all;
   }
   .ask-btn:active{background:var(--brand-soft);}
-  .recipe-card.suggest-card{
-    background:linear-gradient(160deg,#FFFFFF 0%,#FBF9FE 100%);
-  }
-  .recipe-card.suggest-card .recipe-head{padding-right:0;}
   .menu-sec .card-list:empty{display:none;}
 
   /* ── 메뉴 추천 하위 탭 (요리 추천 / 주간 식단표) ── */
@@ -1328,22 +1349,29 @@
         <div class="summary" id="menuSummary"></div>
         <p class="menu-hint">냉장고에 <b>보유</b> 중인 재료와 레시피 재료 이름을 맞춰 봤어요.</p>
 
-        <div class="chips" id="menuChips" role="group" aria-label="레시피 상태 필터"></div>
+        <button class="ask-btn" id="askMenuBtn" type="button" aria-label="지금 냉장고에 보유 중인 재료로 요리 추천을 요청하는 문구 복사">🤖 지금 재료로 추천 요청</button>
 
-        <button class="ask-btn" id="askMenuBtn" type="button" aria-label="현재 보유 재료로 됴니에게 메뉴 물어보기 문구 복사">🤖 현재 보유 재료로 됴니에게 메뉴 물어보기 복사</button>
+        <div class="chips" id="menuChips" role="group" aria-label="레시피 카테고리 필터"></div>
 
         <div class="menu-sec">
           <div class="menu-sec-head">
-            <h2>📖 내가 등록한 레시피</h2>
+            <h2>📖 나의 레시피</h2>
             <span class="sec-n" id="menuMyCount">0</span>
           </div>
           <div class="card-list" id="menuList"></div>
+
+          <!-- 재료가 3개 이상 부족한 레시피: 평소엔 접어 두고 이 링크로만 펼친다 -->
+          <button class="far-toggle" id="menuFarToggle" type="button" aria-expanded="false" hidden>재료 부족 레시피 0개 보기</button>
+          <div class="card-list" id="menuFarList" hidden></div>
         </div>
 
         <form class="add-form" id="recipeForm" autocomplete="off">
           <div class="form-title">+ 내 레시피 등록</div>
           <div class="row">
             <input id="recipeName" type="text" placeholder="요리 이름 (예: 이북식 찜닭)" required aria-label="요리 이름">
+          </div>
+          <div class="row">
+            <select id="recipeCat" aria-label="레시피 카테고리"></select>
           </div>
           <div class="row">
             <input id="recipeItems" type="text" placeholder="필요 재료 (쉼표로 구분: 닭다리살, 깐마늘, 대파)" aria-label="필요 재료">
@@ -1355,14 +1383,6 @@
           <div class="add-hint">재료는 쉼표로 나눠 적으면 냉장고 재고와 자동으로 맞춰져요.</div>
         </form>
 
-        <div class="menu-sec">
-          <div class="menu-sec-head">
-            <h2>💡 이런 요리는 어때요?</h2>
-            <span class="sec-n" id="suggestCount">0</span>
-          </div>
-          <p class="sec-hint">지금 냉장고 재료로 바로 되거나 1~2개만 더 있으면 되는 요리예요. 마음에 드는 요리는 ⭐ 로 내 레시피에 담아 두세요.</p>
-          <div class="card-list" id="suggestList"></div>
-        </div>
       </div><!-- /paneCook -->
 
       <div id="panePlan" hidden>
@@ -1708,7 +1728,7 @@
       ['새우 볶음 / 감바스', ['새우살', '깐마늘', '청양고추'], '마늘·청양고추 듬뿍'],
       ['계란 콩나물국', ['콩나물', '대란', '깐마늘'], '시원한 해장/아침 국']
     ];
-    return rows.map(r => ({ id: uid('r'), name: r[0], items: r[1].slice(), memo: r[2] }));
+    return rows.map(r => ({ id: uid('r'), name: r[0], items: r[1].slice(), memo: r[2], category: guessRecipeCategory(r[0]) }));
   }
 
   function freshState() {
@@ -1863,16 +1883,45 @@
   }
 
   /* 레시피 (이전 저장값에는 없음 → 기본 레시피로 채움) */
+  /* ─────────── 레시피 카테고리 (나의 레시피 5분류) ─────────── */
+  const RECIPE_CATS = ['국·찌개', '솥밥·볶음밥', '메인요리', '기타', '간식'];
+
+  /* 요리 이름 키워드로 카테고리 추정
+     · 예전에 저장한 레시피·기본 레시피에 category가 없을 때 안전하게 채운다
+     · 규칙에 안 걸리는 일반 요리는 '메인요리' */
+  function guessRecipeCategory(name) {
+    const t = String(name == null ? '' : name).replace(/\s+/g, ' ');
+    const has = (words) => words.some(w => t.indexOf(w) >= 0);
+    if (has(['떡볶이', '토스트', '샌드위치', '팬케이크', '와플', '쿠키', '케이크', '디저트', '간식', '푸딩', '빙수', '파전', '전병'])) return '간식';
+    if (has(['솥밥', '볶음밥', '덮밥', '비빔밥', '주먹밥', '김밥', '리조또', '카레', '죽'])) return '솥밥·볶음밥';
+    if (has(['찌개', '전골', '탕', '스프', '국밥', '해장국', '미역국', '된장국'])) return '국·찌개';
+    /* '국'은 '국수'·'국물' 같은 말에 걸리므로 그 둘만 빼고 본다 */
+    if (t.indexOf('국') >= 0 && t.indexOf('국수') < 0 && t.indexOf('국물') < 0) return '국·찌개';
+    if (has(['무침', '나물', '장아찌', '김치', '샐러드', '반찬', '피클', '절임'])) return '기타';
+    return '메인요리';
+  }
+
+  /* 레시피의 카테고리(없거나 알 수 없는 값이면 이름으로 추정) */
+  function recipeCatOf(r) {
+    const c = r && String(r.category == null ? '' : r.category).trim();
+    return RECIPE_CATS.indexOf(c) >= 0 ? c : guessRecipeCategory(r ? r.name : '');
+  }
+
   function normRecipe(o) {
     if (!o || typeof o.name !== 'string') return null;
     let raw = [];
     if (Array.isArray(o.items)) raw = o.items;
     else if (typeof o.items === 'string') raw = parseIngredientText(o.items);
+    const nm = o.name;
     return {
       id: typeof o.id === 'string' ? o.id : uid('r'),
-      name: o.name,
+      name: nm,
       items: uniqItems(raw.map(x => String(x == null ? '' : x).trim()).filter(Boolean)),
-      memo: typeof o.memo === 'string' ? o.memo : ''
+      memo: typeof o.memo === 'string' ? o.memo : '',
+      /* 예전 저장값·백업에는 category가 없다 → 요리 이름으로 추정해 넣는다 */
+      category: RECIPE_CATS.indexOf(String(o.category == null ? '' : o.category).trim()) >= 0
+        ? String(o.category).trim()
+        : guessRecipeCategory(nm)
     };
   }
 
@@ -2073,9 +2122,10 @@
   const elShopList = $('shopList'), elShopSel = $('shopSel'), elSortBtn = $('sortBtn');
   const elShopChips = $('shopChips');
   const elCart = $('view-cart'), elCartList = $('cartList'), elCartTotal = $('cartTotal');
-  const elMenu = $('view-menu'), elMenuList = $('menuList'), elSuggestList = $('suggestList');
+  const elMenu = $('view-menu'), elMenuList = $('menuList');
+  const elMenuFarList = $('menuFarList'), elMenuFarToggle = $('menuFarToggle');
   const elMenuChips = $('menuChips'), elMenuSummary = $('menuSummary');
-  const elMenuMyCount = $('menuMyCount'), elSuggestCount = $('suggestCount'), elAskMenuBtn = $('askMenuBtn');
+  const elMenuMyCount = $('menuMyCount'), elAskMenuBtn = $('askMenuBtn');
   const elPaneCook = $('paneCook'), elPanePlan = $('panePlan');
   const elLedger = $('view-ledger'), elLgList = $('lgList'), elLgSummary = $('lgSummary');
   const elLgMonthLabel = $('lgMonthLabel'), elLgNote = $('lgNote'), elLgCount = $('lgCount');
@@ -2099,7 +2149,9 @@
 
   let activeCat = '전체';
   let activeShopCat = '전체';
-  let activeMenuFilter = 'all';
+  let activeMenuCat = '전체';     // 나의 레시피 카테고리 필터
+  let menuFarOpen = false;        // '재료 부족 레시피 보기' 펼침 여부 (기본 접힘)
+  let recipeCatTouched = false;   // 레시피 분류를 손으로 고른 뒤에는 이름으로 자동 변경하지 않음
   let menuPane = 'cook';        // 메뉴 추천 하위 탭: 'cook' 요리 추천 / 'plan' 주간 식단표
   let editingPlanDay = -1;      // 메뉴명 인라인 수정 중인 요일 (0=월 ~ 6=일)
   let planRotate = 0;           // 바꾸기 순환 위치
@@ -2152,6 +2204,7 @@
   fillCats(elFridgeCat);
   fillCats(elShopCat, SHOP_CATS, '기타·생필품');
   fillCats(elLgCat, LEDGER_CATS, LEDGER_CATS[0]);
+  fillCats($('recipeCat'), RECIPE_CATS, '메인요리');
 
   function catOptions(sel, cats) {
     const list = Array.isArray(cats) && cats.length ? cats : SHOP_CATS;
@@ -2896,21 +2949,20 @@
     { name: '두부 김치', items: ['두부', '김치', '목살'], note: '두부 부쳐 두고 김치·목살 볶아 같이 내기' }
   ];
 
-  /* '지금 바로 가능!' / '1개만 더 있으면 가능' 처럼 추천 카드에 쓰는 상태 */
-  function suggestStatusOf(missCount) {
-    if (missCount === 0) return { key: 'ok', label: '지금 바로 가능!' };
-    return { key: 'soon', label: missCount + '개만 더 있으면 가능' };
-  }
-
   function recipeCardHtml(x) {
     const r = x.r;
     const st = statusOf(x.miss.length);
 
+    const cat = recipeCatOf(r);
     if (editingRecipeId === r.id) {
       return '<div class="card recipe-card is-editing" data-id="' + esc(r.id) + '">' +
         '<div class="item-editor recipe-editor">' +
           '<div class="edit-row"><span class="edit-label">요리 이름</span>' +
             '<input class="r-name" type="text" value="' + esc(r.name) + '" placeholder="요리 이름" aria-label="요리 이름"></div>' +
+          '<div class="edit-row"><span class="edit-label">분류</span>' +
+            '<select class="r-cat" aria-label="레시피 카테고리">' +
+              RECIPE_CATS.map(c => '<option value="' + esc(c) + '"' + (c === cat ? ' selected' : '') + '>' + esc(c) + '</option>').join('') +
+            '</select></div>' +
           '<div class="edit-row"><span class="edit-label">재료</span>' +
             '<input class="r-items" type="text" value="' + esc(r.items.join(', ')) + '" placeholder="닭다리살, 깐마늘" aria-label="필요 재료"></div>' +
           '<div class="edit-row"><span class="edit-label">메모</span>' +
@@ -2936,38 +2988,13 @@
 
     return '<div class="card recipe-card" data-id="' + esc(r.id) + '">' +
       '<div class="recipe-head">' +
-        '<div class="recipe-name">' + esc(r.name) + '</div>' +
+        '<div class="recipe-name"><span class="recipe-cat">' + esc(cat) + '</span>' + esc(r.name) + '</div>' +
         '<span class="recipe-badge ' + st.key + '">' + st.label + '</span>' +
       '</div>' +
       '<div class="recipe-tags">' + tags + '</div>' +
       (r.memo ? '<div class="recipe-memo">' + esc(r.memo) + '</div>' : '') +
       '<div class="recipe-actions">' + actions + '</div>' +
       '<button type="button" class="del-btn" data-action="recipe-del" aria-label="' + esc(r.name) + ' 레시피 삭제">×</button>' +
-    '</div>';
-  }
-
-  /* 추천 레시피 카드 (내장 DB → 내 레시피로 저장 / 부족 재료 담기) */
-  function suggestCardHtml(x) {
-    const b = x.r;
-    const st = suggestStatusOf(x.miss.length);
-    const tags = b.items.map(it => {
-      const has = x.have.indexOf(it) >= 0;
-      return '<span class="ing ' + (has ? 'have' : 'miss') + '"><span class="ing-mark">' + (has ? '✓' : '+') + '</span>' + esc(it) + '</span>';
-    }).join('');
-    const actions =
-      (x.miss.length
-        ? '<button type="button" class="mini-btn fridge-btn" data-action="suggest-cart" aria-label="' + esc(b.name) + ' 부족한 재료 ' + x.miss.length + '개 장바구니 담기">🛒 부족한 재료 담기 (' + x.miss.length + ')</button>'
-        : '') +
-      '<button type="button" class="mini-btn" data-action="suggest-save" aria-label="' + esc(b.name) + ' 내 레시피로 저장">⭐ 내 레시피로 저장</button>';
-
-    return '<div class="card recipe-card suggest-card" data-bidx="' + x.bi + '">' +
-      '<div class="recipe-head">' +
-        '<div class="recipe-name">' + esc(b.name) + '</div>' +
-        '<span class="recipe-badge ' + st.key + '">' + st.label + '</span>' +
-      '</div>' +
-      '<div class="recipe-tags">' + tags + '</div>' +
-      (b.note ? '<div class="recipe-memo">' + esc(b.note) + '</div>' : '') +
-      '<div class="recipe-actions">' + actions + '</div>' +
     '</div>';
   }
 
@@ -2980,101 +3007,59 @@
     return (code % 28 === 0) ? '를' : '을';
   }
 
-  /* 추천 요리를 내 레시피로 저장 (이미 같은 이름이 있으면 중복 저장 않음) */
-  function saveSuggestionAsRecipe(b) {
-    if (!b) return;
-    const nk = normForMatch(b.name);
-    for (let i = 0; i < state.recipes.length; i++) {
-      if (normForMatch(state.recipes[i].name) === nk) {
-        showToast('이미 내 레시피에 있는 요리예요.');
-        return;
-      }
-    }
-    state.recipes.unshift({ id: uid('r'), name: b.name, items: b.items.slice(), memo: b.note || '' });
-    save(); renderMenu();
-    showToast('「' + b.name + '」' + josaEul(b.name) + ' 내 레시피에 저장했어요.');
-  }
-
   function renderMenu() {
     const keys = stockedKeys();
     const rows = state.recipes.map((r, i) => {
       const e = evalRecipe(r, keys);
-      return { r: r, i: i, have: e.have, miss: e.miss };
+      return { r: r, i: i, have: e.have, miss: e.miss, cat: recipeCatOf(r) };
     });
 
-    /* 내장 추천: 내 레시피와 같은 이름은 빼고, 부족 2개까지만 */
-    const mine = {};
-    state.recipes.forEach(r => {
-      const k = normForMatch(r.name);
-      if (k) mine[k] = true;
-    });
-    const sug = [];
-    BUILTIN_RECIPES.forEach((b, bi) => {
-      const k = normForMatch(b.name);
-      if (!k || mine[k]) return;
-      const e = evalRecipe(b, keys);
-      if (e.miss.length > 2) return;
-      sug.push({ r: b, bi: bi, have: e.have, miss: e.miss });
-    });
-    sug.sort((a, b) => (a.miss.length - b.miss.length) ||
-      (a.r.items.length - b.r.items.length) || (a.bi - b.bi));
-
-    const myOk = rows.filter(x => x.miss.length === 0).length;
-    const mySoon = rows.filter(x => x.miss.length > 0 && x.miss.length <= 2).length;
-    const myFar = rows.length - myOk - mySoon;
-    const sugOk = sug.filter(x => x.miss.length === 0).length;
-    const sugSoon = sug.length - sugOk;
+    /* 지금 고른 카테고리 칩 안의 레시피들 */
+    const inCat = rows.filter(x => activeMenuCat === '전체' || x.cat === activeMenuCat);
+    const myOk = inCat.filter(x => x.miss.length === 0).length;
+    const mySoon = inCat.filter(x => x.miss.length > 0 && x.miss.length <= 2).length;
+    /* 재료가 3개 이상 부족한 레시피 → 평소엔 접어 두고 하단 보조 링크로만 연다 */
+    const farRows = inCat.filter(x => x.miss.length > 2)
+      .sort((a, b) => (a.miss.length - b.miss.length) || (a.i - b.i));
 
     elMenuSummary.innerHTML =
-      '<div class="sum-item"><div class="sum-label">지금 가능</div><div class="sum-value">' + (myOk + sugOk) + '<span class="unit">개</span></div></div>' +
-      '<div class="sum-item"><div class="sum-label">거의 가능</div><div class="sum-value">' + (mySoon + sugSoon) + '<span class="unit">개</span></div></div>' +
-      '<div class="sum-item"><div class="sum-label">재료 부족</div><div class="sum-value">' + myFar + '<span class="unit">개</span></div></div>';
+      '<div class="sum-item"><div class="sum-label">지금 가능</div><div class="sum-value">' + myOk + '<span class="unit">개</span></div></div>' +
+      '<div class="sum-item"><div class="sum-label">거의 가능</div><div class="sum-value">' + mySoon + '<span class="unit">개</span></div></div>';
 
-    /* 메뉴 추천 상태 칩도 이름만 표시(개수 숫자 없음) — 냉장고·자주 사는 품목·가계부 칩과 같은 방식 */
-    const chipDefs = [
-      ['all', '전체'],
-      ['ok', '지금 가능'],
-      ['soon', '거의 가능']
-    ];
+    /* 카테고리 칩 — 이름만 표시(개수 숫자 없음) — 냉장고·자주 사는 품목·가계부 칩과 같은 방식 */
+    const chipDefs = ['전체'].concat(RECIPE_CATS);
     elMenuChips.innerHTML = chipDefs.map(c =>
-      '<button type="button" class="chip' + (activeMenuFilter === c[0] ? ' on' : '') + '" data-mfilter="' + c[0] + '" aria-pressed="' + (activeMenuFilter === c[0]) + '">' +
-      esc(c[1]) + '</button>'
+      '<button type="button" class="chip' + (activeMenuCat === c ? ' on' : '') + '" data-mcat="' + esc(c) + '" aria-pressed="' + (activeMenuCat === c) + '">' +
+      esc(c) + '</button>'
     ).join('');
 
-    /* 필터는 두 섹션 모두에 같이 적용 */
-    let myList = rows.slice();
-    let sugList = sug.slice();
-    if (activeMenuFilter === 'ok') {
-      myList = myList.filter(x => x.miss.length === 0);
-      sugList = sugList.filter(x => x.miss.length === 0);
-    } else if (activeMenuFilter === 'soon') {
-      myList = myList.filter(x => x.miss.length > 0 && x.miss.length <= 2);
-      sugList = sugList.filter(x => x.miss.length > 0 && x.miss.length <= 2);
-    }
-    myList.sort((a, b) => (a.miss.length - b.miss.length) || (a.i - b.i));
+    /* 기본 목록: 지금 가능(miss 0) + 거의 가능(miss 1~2)만 */
+    const myList = inCat.filter(x => x.miss.length <= 2)
+      .sort((a, b) => (a.miss.length - b.miss.length) || (a.i - b.i));
 
     elMenuMyCount.textContent = String(myList.length);
-    elSuggestCount.textContent = String(sugList.length);
 
     if (!myList.length) {
       elMenuList.innerHTML = '<div class="empty">' +
         (state.recipes.length
-          ? '이 상태에 맞는 레시피가 없어요.'
-          : '내 레시피가 없어요. 아래에서 등록하거나, 추천 요리를 ⭐ 로 저장해 보세요.') +
+          ? (activeMenuCat === '전체'
+              ? '지금 바로 하거나 재료 1~2개만 더 있으면 되는 레시피가 없어요.'
+              : '「' + esc(activeMenuCat) + '」 레시피 중 지금 바로 하거나 재료 1~2개만 더 있으면 되는 게 없어요.')
+          : '나의 레시피가 없어요. 아래에서 등록해 보세요.') +
         '</div>';
     } else {
       elMenuList.innerHTML = myList.map(recipeCardHtml).join('');
     }
 
-    if (!sugList.length) {
-      elSuggestList.innerHTML = '<div class="empty">' +
-        (sug.length
-          ? '이 상태에 맞는 추천 요리가 없어요.'
-          : '지금은 추천할 요리가 없어요. 냉장고 재료를 조금 더 채우면 다시 골라 드릴게요.') +
-        '</div>';
-    } else {
-      elSuggestList.innerHTML = sugList.map(suggestCardHtml).join('');
-    }
+    /* 하단 보조 링크: 재료 부족 레시피가 있을 때만 보이고 기본은 접힘 */
+    const showFar = !!menuFarOpen && farRows.length > 0;
+    elMenuFarToggle.hidden = !farRows.length;
+    elMenuFarToggle.textContent = showFar
+      ? '재료 부족 레시피 접기'
+      : '재료 부족 레시피 ' + farRows.length + '개 보기';
+    elMenuFarToggle.setAttribute('aria-expanded', String(showFar));
+    elMenuFarList.hidden = !showFar;
+    elMenuFarList.innerHTML = showFar ? farRows.map(recipeCardHtml).join('') : '';
 
     renderPlan();
   }
@@ -3389,9 +3374,11 @@
       if (itemsInp) itemsInp.focus();
       return;
     }
+    const catInp = card.querySelector('.r-cat');
     r.name = name;
     r.items = items;
     r.memo = memoInp ? memoInp.value.trim() : '';
+    r.category = (catInp && RECIPE_CATS.indexOf(catInp.value) >= 0) ? catInp.value : guessRecipeCategory(name);
     editingRecipeId = null;
     save(); renderMenu();
     showToast('레시피를 저장했어요.');
@@ -3853,29 +3840,21 @@
   elMenuChips.addEventListener('click', (e) => {
     const b = e.target.closest('.chip');
     if (!b) return;
-    activeMenuFilter = b.getAttribute('data-mfilter') || 'all';
+    activeMenuCat = b.getAttribute('data-mcat') || '전체';
+    menuFarOpen = false;
     editingRecipeId = null;
     renderMenu();
   });
 
-  /* 추천 레시피 카드 이벤트 */
-  elSuggestList.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-action]');
-    if (!btn) return;
-    const card = btn.closest('[data-bidx]');
-    if (!card) return;
-    const bi = parseInt(card.getAttribute('data-bidx'), 10);
-    const b = BUILTIN_RECIPES[bi];
-    if (!b) return;
-    const action = btn.getAttribute('data-action');
-    if (action === 'suggest-cart') {
-      addMissingToCart({ items: b.items });
-    } else if (action === 'suggest-save') {
-      saveSuggestionAsRecipe(b);
-    }
+  /* 재료 부족 레시피 접기/펼치기 */
+  elMenuFarToggle.addEventListener('click', () => {
+    menuFarOpen = !menuFarOpen;
+    editingRecipeId = null;
+    renderMenu();
   });
 
-  elMenuList.addEventListener('click', (e) => {
+  /* 레시피 카드(나의 레시피 + 재료 부족 목록) 공통 이벤트 */
+  function onRecipeCardClick(e) {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     const card = btn.closest('[data-id]');
@@ -3889,7 +3868,7 @@
     if (action === 'recipe-edit') {
       editingRecipeId = id;
       renderMenu();
-      const inp = elMenuList.querySelector('.recipe-card[data-id="' + cssEscape(id) + '"] .r-name');
+      const inp = elMenu.querySelector('.recipe-card[data-id="' + cssEscape(id) + '"] .r-name');
       if (inp) {
         inp.focus();
         try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (err) {}
@@ -3914,12 +3893,16 @@
         save(); renderMenu();
       });
     }
-  });
+  }
 
-  elMenuList.addEventListener('keydown', (e) => {
+  elMenuList.addEventListener('click', onRecipeCardClick);
+  elMenuFarList.addEventListener('click', onRecipeCardClick);
+
+  function onRecipeCardKeydown(e) {
     const t = e.target;
     if (!t || !t.classList) return;
-    const isField = t.classList.contains('r-name') || t.classList.contains('r-items') || t.classList.contains('r-memo');
+    const isField = t.classList.contains('r-name') || t.classList.contains('r-items') ||
+      t.classList.contains('r-memo') || t.classList.contains('r-cat');
     if (!isField) return;
     const card = t.closest('[data-id]');
     if (!card) return;
@@ -3932,11 +3915,24 @@
       editingRecipeId = null;
       renderMenu();
     }
+  }
+
+  elMenuList.addEventListener('keydown', onRecipeCardKeydown);
+  elMenuFarList.addEventListener('keydown', onRecipeCardKeydown);
+
+  /* 요리 이름을 적으면 분류를 자동 추정 (손으로 고른 뒤에는 그대로 둔다) */
+  $('recipeCat').addEventListener('change', () => { recipeCatTouched = true; });
+  $('recipeName').addEventListener('input', () => {
+    if (recipeCatTouched) return;
+    const nm = $('recipeName').value.trim();
+    if (!nm) return;
+    $('recipeCat').value = guessRecipeCategory(nm);
   });
 
   $('recipeForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const nameEl = $('recipeName'), itemsEl = $('recipeItems'), memoEl = $('recipeMemo');
+    const catEl = $('recipeCat');
     const name = nameEl.value.trim();
     if (!name) { nameEl.focus(); return; }
     const items = parseIngredientText(itemsEl.value);
@@ -3945,9 +3941,13 @@
       itemsEl.focus();
       return;
     }
-    state.recipes.unshift({ id: uid('r'), name: name, items: items, memo: memoEl.value.trim() });
+    const cat = RECIPE_CATS.indexOf(catEl.value) >= 0 ? catEl.value : guessRecipeCategory(name);
+    state.recipes.unshift({ id: uid('r'), name: name, items: items, memo: memoEl.value.trim(), category: cat });
     nameEl.value = ''; itemsEl.value = ''; memoEl.value = '';
-    activeMenuFilter = 'all';
+    recipeCatTouched = false;
+    catEl.value = '메인요리';
+    activeMenuCat = '전체';
+    menuFarOpen = false;
     save(); renderMenu();
     showToast('레시피를 등록했어요.');
     nameEl.focus();
@@ -4859,34 +4859,45 @@
 
   elCopyBtn.addEventListener('click', copyOrder);
 
-  /* 현재 보유 재료로 메뉴 문의 문구 복사 */
-  function stockedNames() {
-    return state.fridge.filter(f => f.inStock).map(f => f.name);
+  /* ─────────── 🤖 지금 보유 재료로 추천 요청 문구 복사 ───────────
+     · 냉장고에서 '보유'인 품목만 모아 요청 문구를 만든다(소진 품목 제외)
+     · 신선재료 / 소스·면·기타(장기보관 카테고리)를 나눠서 적는다 */
+  function stockedItems() {
+    return state.fridge.filter(f => f.inStock === true);
   }
 
-  function buildAskText() {
-    const lines = ['됴니야, 지금 냉장고에 이런 재료가 있는데 뭐 해 먹을까?'];
-    stockedNames().forEach(n => lines.push('- ' + n));
+  function buildRecommendRequestText(items) {
+    const fresh = items.filter(f => !isLongTermCat(f.cat)).map(f => f.name);
+    const pantry = items.filter(f => isLongTermCat(f.cat)).map(f => f.name);
+    const lines = ['지금 냉장고에 있는 재료로 만들 수 있는 요리 추천해 줘! (인스타나 요즘 인기 레시피도 같이 찾아줘)'];
+    if (fresh.length) lines.push('', '- 재료: ' + fresh.join(', '));
+    if (pantry.length) {
+      if (!fresh.length) lines.push('');
+      lines.push('- 소스·면·기타: ' + pantry.join(', '));
+    }
     return lines.join('\n');
   }
 
-  async function copyAskMenu() {
-    const names = stockedNames();
-    if (!names.length) {
-      showToast('냉장고에 보유 재료가 없어요. 품목을 보유로 표시해 주세요.');
+  async function copyRecommendRequest() {
+    const items = stockedItems();
+    if (!items.length) {
+      showToast('냉장고에 보유 중인 재료가 없어요');
       return;
     }
-    const text = buildAskText();
+    const text = buildRecommendRequestText(items);
     let ok = false;
     if (navigator.clipboard && window.isSecureContext) {
       try { await navigator.clipboard.writeText(text); ok = true; } catch (e) { ok = false; }
     }
     if (!ok) ok = legacyCopy(text);
-    if (ok) showToast('복사했어요. 됴니에게 붙여 주세요!');
-    else openModal(text, '메뉴 물어보기 문구');
+    if (ok) {
+      showToast('📋 보유 재료 ' + items.length + '개와 추천 요청 문구를 복사했어요! 됴니에게 붙여넣어 보세요');
+    } else {
+      openModal(text, '메뉴 추천 요청 문구');
+    }
   }
 
-  elAskMenuBtn.addEventListener('click', copyAskMenu);
+  elAskMenuBtn.addEventListener('click', copyRecommendRequest);
 
   $('modalClose').addEventListener('click', closeModal);
   elModal.addEventListener('click', (e) => { if (e.target === elModal) closeModal(); });
@@ -5039,7 +5050,8 @@
     state = parsed.state;
     activeCat = '전체';
     activeShopCat = '전체';
-    activeMenuFilter = 'all';
+    activeMenuCat = '전체';
+    menuFarOpen = false;
     query = '';
     editingId = null;
     editingItemId = null;
@@ -5111,7 +5123,8 @@
     state = freshState();
     activeCat = '전체';
     activeShopCat = '전체';
-    activeMenuFilter = 'all';
+    activeMenuCat = '전체';
+    menuFarOpen = false;
     query = '';
     editingId = null;
     editingItemId = null;

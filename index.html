@@ -1244,8 +1244,6 @@
   <main>
     <!-- ══════════ 냉장고 재고 ══════════ -->
     <section class="view" id="view-fridge" role="tabpanel" aria-labelledby="tabFridge">
-      <div class="summary" id="fridgeSummary"></div>
-
       <div class="search-box" id="searchBox">
         <span class="ico" aria-hidden="true">🔍</span>
         <input id="fridgeSearch" type="text" inputmode="search" enterkeyhint="search" autocomplete="off"
@@ -2067,7 +2065,7 @@
   /* ─────────── DOM ─────────── */
   const $ = (id) => document.getElementById(id);
   const elFridge = $('view-fridge'), elShop = $('view-shop');
-  const elSummary = $('fridgeSummary'), elChips = $('fridgeChips'), elFridgeList = $('fridgeList');
+  const elChips = $('fridgeChips'), elFridgeList = $('fridgeList');
   const elFridgeCount = $('fridgeCount'), elSearch = $('fridgeSearch'), elSearchBox = $('searchBox');
   const elHideNote = $('fridgeHideNote');
   const elOrderBtn = $('fridgeOrderBtn');
@@ -2198,16 +2196,6 @@
     return fresh.concat(keep);
   }
 
-  function renderSummary() {
-    const total = state.fridge.length;
-    const inS = state.fridge.filter(i => i.inStock).length;
-    const outS = total - inS;
-    elSummary.innerHTML =
-      '<div class="sum-item"><div class="sum-label">전체 품목</div><div class="sum-value">' + total + '<span class="unit">개</span></div></div>' +
-      '<div class="sum-item"><div class="sum-label">보유</div><div class="sum-value">' + inS + '<span class="unit">개</span></div></div>' +
-      '<div class="sum-item"><div class="sum-label">소진</div><div class="sum-value">' + outS + '<span class="unit">개</span></div></div>';
-  }
-
   function renderChips() {
     /* 냉장고 카테고리 칩은 이름만 표시(개수 숫자 없음) — ⭐ 자주 사는 품목 칩과 같은 방식 */
     const all = ['전체'].concat(CATS);
@@ -2218,7 +2206,6 @@
   }
 
   function renderFridge() {
-    renderSummary();
     renderChips();
 
     const rows = fridgeFiltered();

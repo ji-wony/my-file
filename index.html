@@ -187,7 +187,7 @@
   .hide-note{display:none; margin:-5px 2px 10px; font-size:11.5px; color:var(--brand); font-weight:600;}
   .hide-note.on{display:block;}
 
-  /* ── 소스·양념 숨김 토글 (연보라 톤) ── */
+  /* ── 소스·양념·면 숨김 토글 (연보라 톤) ── */
   .sauce-toggle{
     flex:0 0 auto;
     padding:5px 9px 6px;
@@ -1257,7 +1257,7 @@
       <div class="count-line count-line--row">
         <span id="fridgeCount"></span>
         <div class="fridge-tools">
-          <button class="sauce-toggle" id="fridgeHideSauceBtn" type="button" aria-pressed="false" aria-label="소스·양념 숨기기">🙈 소스·양념 숨김</button>
+          <button class="sauce-toggle" id="fridgeHideSauceBtn" type="button" aria-pressed="false" aria-label="소스·양념·면 숨기기">🙈 소스·면 숨김</button>
           <button class="order-btn" id="fridgeOrderBtn" type="button" aria-pressed="false" aria-label="냉장고 품목 순서 변경">↕️ 순서 변경</button>
         </div>
       </div>
@@ -1764,7 +1764,7 @@
       ledger: Array.isArray(p.ledger) ? p.ledger.map(normLedger).filter(Boolean) : [],
       tab: (p.tab === 'shop' || p.tab === 'cart' || p.tab === 'menu' || p.tab === 'ledger') ? p.tab : 'fridge',
       favFirst: !!p.favFirst,
-      hideSauce: !!p.hideSauce,   /* 🙈 소스·양념 숨김 (없는 예전 저장값·백업은 꺼진 상태) */
+      hideSauce: !!p.hideSauce,   /* 🙈 소스·양념·면 숨김 (없는 예전 저장값·백업은 꺼진 상태, 필드명은 그대로 유지) */
       catVersion: SHOP_CAT_SCHEMA,
       frequentAddedV2: FREQ_ADD_SCHEMA,
       tofuSplitV1: TOFU_SPLIT_SCHEMA,
@@ -2163,18 +2163,23 @@
   }
 
   /* ─────────── 냉장고 탭 ─────────── */
-  const SAUCE_CAT = '소스·양념';   /* '전체' 보기에서는 항상 맨 아래 묶음 */
+  /* 장기보관 카테고리 묶음: '소스·양념' + '간편·면·음료'
+     · '전체' 보기에서는 이 둘이 한 묶음으로 항상 신선재료 아래(맨 아래)에 선다
+     · 🙈 토글도 이 둘을 한 묶음으로 함께 감춘다 */
+  function isLongTermCat(cat) {
+    return cat === '소스·양념' || cat === '간편·면·음료';
+  }
 
-  /* 지금 이 화면에서 소스·양념을 실제로 감추고 있는지
+  /* 지금 이 화면에서 장기보관 카테고리(소스·양념·간편·면·음료)를 실제로 감추고 있는지
      - 🙈 토글이 켜져 있고 · '전체' 보기이고 · 검색어가 비어 있을 때만 감춘다
-     - 소스·양념 칩을 직접 누르거나 검색어를 넣으면 숨김과 무관하게 보인다 */
-  function sauceHiddenNow() {
+     - 소스·양념 / 간편·면·음료 칩을 직접 누르거나 검색어를 넣으면 숨김과 무관하게 보인다 */
+  function longTermHiddenNow() {
     return !!state.hideSauce && activeCat === '전체' && !query.trim();
   }
 
-  /* 🙈 토글 때문에 가려진 소스·양념 개수 */
-  function hiddenSauceCount() {
-    return state.fridge.filter(it => it.cat === SAUCE_CAT).length;
+  /* 🙈 토글 때문에 가려진 장기보관 품목(소스·양념 + 간편·면·음료) 개수 */
+  function hiddenLongTermCount() {
+    return state.fridge.filter(it => isLongTermCat(it.cat)).length;
   }
 
   function fridgeFiltered() {
@@ -2184,12 +2189,13 @@
       if (!q) return true;
       return (it.name + ' ' + it.memo + ' ' + it.cat).toLowerCase().indexOf(q) >= 0;
     });
-    if (sauceHiddenNow()) return list.filter(it => it.cat !== SAUCE_CAT);
-    /* '전체' 보기: 소스·양념을 다른 카테고리 품목 아래로 모은다(각 그룹 내부는 저장 순서 그대로) */
+    if (longTermHiddenNow()) return list.filter(it => !isLongTermCat(it.cat));
+    /* '전체' 보기: 소스·양념·간편·면·음료를 신선재료 아래 한 묶음으로 모은다
+       (각 그룹 내부는 저장 순서 그대로) */
     if (activeCat !== '전체') return list;
-    const rest = [], sauce = [];
-    list.forEach(it => (it.cat === SAUCE_CAT ? sauce : rest).push(it));
-    return rest.concat(sauce);
+    const fresh = [], keep = [];
+    list.forEach(it => (isLongTermCat(it.cat) ? keep : fresh).push(it));
+    return fresh.concat(keep);
   }
 
   function renderSummary() {
@@ -2219,17 +2225,17 @@
     /* 편집 중인 품목이 검색·필터에서 빠졌으면 편집 상태도 정리 */
     if (editingFridgeId && !rows.some(it => it.id === editingFridgeId)) editingFridgeId = null;
     const inS = rows.filter(i => i.inStock).length;
-    const hiddenN = sauceHiddenNow() ? hiddenSauceCount() : 0;
+    const hiddenN = longTermHiddenNow() ? hiddenLongTermCount() : 0;
     elFridgeCount.innerHTML = '전체 <b>' + rows.length + '</b>개 · 보유 <b>' + inS + '</b> · 소진 <b>' + (rows.length - inS) + '</b>';
-    /* 가려진 소스·양념 개수는 카운트 바로 아래 한 줄로 가볍게 안내 */
-    elHideNote.textContent = hiddenN ? '🙈 소스·양념 ' + hiddenN + '개 숨김' : '';
+    /* 가려진 장기보관(소스·양념·면) 개수는 카운트 바로 아래 한 줄로 가볍게 안내 */
+    elHideNote.textContent = hiddenN ? '🙈 소스·양념·면 ' + hiddenN + '개 숨김' : '';
     elHideNote.hidden = !hiddenN;
     elHideNote.classList.toggle('on', !!hiddenN);
     renderSauceToggle();
 
     if (!rows.length) {
-      const emptyMsg = (hiddenN && !state.fridge.filter(it => it.cat !== SAUCE_CAT).length)
-        ? '소스·양념만 남아 있어요. 위 🙈 버튼을 끄면 다시 보여요.'
+      const emptyMsg = (hiddenN && !state.fridge.filter(it => !isLongTermCat(it.cat)).length)
+        ? '소스·양념·면만 남아 있어요. 위 🙈 버튼을 끄면 다시 보여요.'
         : (state.fridge.length ? '조건에 맞는 품목이 없어요.' : '냉장고가 비어 있어요. 아래에서 품목을 추가해 보세요.');
       elFridgeList.innerHTML = '<div class="empty">' + emptyMsg + '</div>';
       return;
@@ -2278,12 +2284,12 @@
     }).join('');
   }
 
-  /* 🙈 소스·양념 숨김 토글 모양·상태 맞추기 */
+  /* 🙈 소스·면 숨김 토글 모양·상태 맞추기 */
   function renderSauceToggle() {
     const on = !!state.hideSauce;
     elHideSauceBtn.classList.toggle('on', on);
     elHideSauceBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    elHideSauceBtn.setAttribute('aria-label', on ? '소스·양념 숨김 켜짐 — 눌러서 다시 보기' : '소스·양념 숨기기');
+    elHideSauceBtn.setAttribute('aria-label', on ? '소스·양념·면 숨김 켜짐 — 눌러서 다시 보기' : '소스·양념·면 숨기기');
   }
 
   /* ─────────── 냉장고 순서 변경(↕️ 순서 변경 → 꾹 눌러 드래그) ─────────── */
@@ -2315,8 +2321,8 @@
 
   /* 보이는 목록에서 바뀔 순서를 state.fridge 전체 배열의 같은 자리들에 다시 앉힌다
      → 카테고리 필터·검색 중에도 필터된 품목끼리의 상대 순서가 정확히 반영된다.
-     '전체' 보기는 소스·양념 묶음이 맨 아래에 따로 서므로 그룹별로 제자리 슬롯에만 앉힌다
-     (소스·양념을 위로 끌어도 묶음 위치는 유지되고, 각 그룹 내부 순서만 바뀐다). */
+     '전체' 보기는 장기보관(소스·양념·간편·면·음료) 묶음이 맨 아래에 따로 서므로 그룹별로 제자리 슬롯에만 앉힌다
+     (소스·양념·면을 위로 끌어도 묶음 위치는 유지되고, 각 그룹 내부 순서만 바뀐다). */
   function applyFridgeOrder(newVisibleIds) {
     if (!newVisibleIds.length) return false;
     const byId = new Map(state.fridge.map(it => [it.id, it]));
@@ -2326,7 +2332,7 @@
     const next = state.fridge.slice();
     let placed = 0;
     const groups = activeCat === '전체'
-      ? [it => it.cat !== SAUCE_CAT, it => it.cat === SAUCE_CAT]
+      ? [it => !isLongTermCat(it.cat), it => isLongTermCat(it.cat)]
       : [null];
 
     groups.forEach(pred => {
@@ -2491,18 +2497,19 @@
 
   elOrderBtn.addEventListener('click', () => setReorderMode(!reorderMode));
 
-  /* 🙈 소스·양념 숨김 토글: '전체' 보기에서만 감추고, 소스·양념 칩·검색에서는 그대로 보인다 */
+  /* 🙈 소스·면 숨김 토글: '전체' 보기에서만 감추고,
+     소스·양념 / 간편·면·음료 칩이나 검색에서는 그대로 보인다 */
   elHideSauceBtn.addEventListener('click', () => {
     state.hideSauce = !state.hideSauce;
     save();
-    const n = hiddenSauceCount();
+    const n = hiddenLongTermCount();
     renderFridge();
     if (state.hideSauce) {
       showToast(n > 0
-        ? '소스·양념 ' + n + '개를 숨겼어요. 소스·양념 칩이나 검색으로 보면 다시 보여요.'
-        : '숨길 소스·양념 품목이 없어요.', null, 2800);
+        ? '소스·양념·면 ' + n + '개를 숨겼어요. 소스·양념·면 칩이나 검색으로 보면 다시 보여요.'
+        : '숨길 소스·양념·면 품목이 없어요.', null, 2800);
     } else {
-      showToast('소스·양념을 다시 보여줘요.', null, 1800);
+      showToast('소스·양념·면을 다시 보여줘요.', null, 1800);
     }
   });
 

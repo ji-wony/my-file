@@ -1553,9 +1553,9 @@
   <button class="cta-btn" id="toCartBtn" type="button">🛒 장바구니로 담기 (선택 0건)</button>
 </div>
 
-<!-- 장바구니 → 주문 요청 CTA -->
+<!-- 장바구니 → 장바구니 요청 CTA -->
 <div class="cta-bar" id="cartCtaBar" hidden>
-  <button class="cta-btn" id="copyBtn" type="button">🛒 됴니에게 쿠팡 주문 요청 복사 (0건)</button>
+  <button class="cta-btn" id="copyBtn" type="button">🛒 됴니에게 쿠팡 장바구니 요청 복사 (0건)</button>
 </div>
 
 <!-- 하단 탭 -->
@@ -1588,9 +1588,9 @@
 <!-- 클립보드 폴백 모달 -->
 <div class="modal-backdrop" id="modal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <h2 id="modalTitle">주문 요청 문구</h2>
+    <h2 id="modalTitle">장바구니 요청 문구</h2>
     <p class="modal-sub">아래 문구를 길게 눌러 전체 선택한 뒤 복사해서 됴니에게 붙여 주세요.</p>
-    <textarea id="copyText" readonly aria-label="주문 요청 문구"></textarea>
+    <textarea id="copyText" readonly aria-label="장바구니 요청 문구"></textarea>
     <div class="modal-btns">
       <button class="ghost" id="modalClose" type="button">닫기</button>
       <button class="primary" id="modalCopy" type="button">복사</button>
@@ -4377,7 +4377,7 @@
     elToCartBtn.classList.toggle('dim', n === 0);
 
     const c = state.cart.length;
-    elCopyBtn.textContent = '🛒 됴니에게 쿠팡 주문 요청 복사 (' + c + '건)';
+    elCopyBtn.textContent = '🛒 됴니에게 쿠팡 장바구니 요청 복사 (' + c + '건)';
     elCopyBtn.classList.toggle('dim', c === 0);
   }
 
@@ -5822,15 +5822,17 @@
     }
   });
 
-  /* ─────────── 주문 문구 ─────────── */
+  /* ─────────── 장바구니 요청 문구 ─────────── */
   function buildOrderText(items) {
-    const lines = ['됴니야, 아래 쿠팡 품목 주문해 줘!', ''];
+    const lines = ['됴니야, 아래 쿠팡 품목들 바로 주문하지 말고 쿠팡 장바구니에 담아 줘!', ''];
     items.forEach(it => {
       lines.push('- ' + it.name + ' × ' + it.qty);
       if (it.url) lines.push('  링크: ' + it.url);
+      else lines.push('  (링크 없음 · 쿠팡 구매 이력 기준)');
     });
     lines.push('');
     lines.push('총 ' + items.length + '건');
+    lines.push('링크가 없는 품목은 내가 쿠팡에서 구매했던 적 있는 상품으로 찾아서 장바구니에 담아 줘.');
     return lines.join('\n');
   }
 
@@ -5854,7 +5856,7 @@
   }
 
   function openModal(text, title) {
-    if (elModalTitle) elModalTitle.textContent = title || '주문 요청 문구';
+    if (elModalTitle) elModalTitle.textContent = title || '장바구니 요청 문구';
     elCopyText.value = text;
     elModal.hidden = false;
     setTimeout(() => { try { elCopyText.focus(); elCopyText.select(); } catch (e) {} }, 30);
@@ -5874,7 +5876,7 @@
     }
     if (!ok) ok = legacyCopy(text);
     if (ok) {
-      showToast('주문 문구를 복사했어요. 됴니에게 붙여 주세요!');
+      showToast('장바구니 요청 문구를 복사했어요. 됴니에게 붙여 주세요!');
     } else {
       openModal(text);
     }
